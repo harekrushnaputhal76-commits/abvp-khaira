@@ -3013,6 +3013,20 @@ body.lightbox-locked {
   margin-top: -6px;
 }
 
+.hero-cd-status {
+  margin-top: 0.85rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.3px;
+}
+
+.second-pulse {
+  color: var(--saffron) !important;
+  transform: scale(1.12);
+  transition: transform 0.15s ease-out, color 0.15s ease-out;
+}
+
 /* Direct Student Join Form */
 .join-divider {
   display: flex;

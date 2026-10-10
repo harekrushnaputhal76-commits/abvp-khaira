@@ -82,30 +82,93 @@
         <div class="hero-countdown-box" id="hero-countdown">
           <div class="hero-countdown-tag">
             <span class="live-pulse-dot" aria-hidden="true"></span>
-            <span>ELECTION COUNTDOWN &bull; VOTING 15 OCT 2026</span>
+            <span>LIVE ELECTION COUNTDOWN &bull; VOTING STARTS 15 OCT 2026</span>
           </div>
           <div class="hero-cd-units">
             <div class="hero-cd-unit">
-              <span class="hero-cd-val" id="hero-cd-days">04</span>
+              <span class="hero-cd-val" id="hero-cd-days">--</span>
               <span class="hero-cd-label">Days</span>
             </div>
             <span class="hero-cd-divider">:</span>
             <div class="hero-cd-unit">
-              <span class="hero-cd-val" id="hero-cd-hours">20</span>
+              <span class="hero-cd-val" id="hero-cd-hours">--</span>
               <span class="hero-cd-label">Hours</span>
             </div>
             <span class="hero-cd-divider">:</span>
             <div class="hero-cd-unit">
-              <span class="hero-cd-val" id="hero-cd-mins">32</span>
+              <span class="hero-cd-val" id="hero-cd-mins">--</span>
               <span class="hero-cd-label">Mins</span>
             </div>
             <span class="hero-cd-divider">:</span>
             <div class="hero-cd-unit">
-              <span class="hero-cd-val" id="hero-cd-secs">11</span>
+              <span class="hero-cd-val" id="hero-cd-secs">--</span>
               <span class="hero-cd-label">Secs</span>
             </div>
           </div>
+          <div class="hero-cd-status" id="hero-cd-status">
+            <span>Official Voting at Khaira College Campus &bull; 8:00 AM IST</span>
+          </div>
         </div>
+
+        <!-- Standalone Live Ticking Script: Runs immediately on all protocols (http, https, file://) with zero dependencies -->
+        <script>
+          (function() {
+            var electionTarget = new Date('2026-10-15T08:00:00+05:30').getTime();
+
+            function tickLiveElection() {
+              var now = Date.now();
+              var diff = electionTarget - now;
+
+              var days = 0, hours = 0, mins = 0, secs = 0;
+              if (diff > 0) {
+                days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                secs = Math.floor((diff % (1000 * 60)) / 1000);
+              }
+
+              var d = (days < 10 ? '0' : '') + days;
+              var h = (hours < 10 ? '0' : '') + hours;
+              var m = (mins < 10 ? '0' : '') + mins;
+              var s = (secs < 10 ? '0' : '') + secs;
+
+              var hDays = document.getElementById('hero-cd-days');
+              var hHours = document.getElementById('hero-cd-hours');
+              var hMins = document.getElementById('hero-cd-mins');
+              var hSecs = document.getElementById('hero-cd-secs');
+
+              var cDays = document.getElementById('cd-days');
+              var cHours = document.getElementById('cd-hours');
+              var cMins = document.getElementById('cd-mins');
+              var cSecs = document.getElementById('cd-secs');
+
+              if (hDays) hDays.textContent = d;
+              if (hHours) hHours.textContent = h;
+              if (hMins) hMins.textContent = m;
+              if (hSecs) {
+                hSecs.textContent = s;
+                hSecs.classList.add('second-pulse');
+                setTimeout(function() { hSecs.classList.remove('second-pulse'); }, 400);
+              }
+
+              if (cDays) cDays.textContent = d;
+              if (cHours) cHours.textContent = h;
+              if (cMins) cMins.textContent = m;
+              if (cSecs) {
+                cSecs.textContent = s;
+                cSecs.classList.add('second-pulse');
+                setTimeout(function() { cSecs.classList.remove('second-pulse'); }, 400);
+              }
+            }
+
+            // Execute immediately on load
+            tickLiveElection();
+            setInterval(tickLiveElection, 1000);
+            if (document.readyState === 'loading') {
+              document.addEventListener('DOMContentLoaded', tickLiveElection);
+            }
+          })();
+        </script>
 
         <div class="hero-stats-row">
           <div class="hero-stat-pill">
