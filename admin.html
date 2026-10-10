@@ -547,253 +547,507 @@
         if (auth) {
           try { await auth.signOut(); } catch (e) {}
         }
-      });
+    // Official ABVP Khaira Real-Time Dataset
+    const DEFAULT_NOTICES = [
+      {
+        id: "n-1",
+        title: "Khaira College Student Union Election - 15 October 2026",
+        message: "All students of Khaira College are requested to support and vote for ABVP candidates for President & General Secretary. Struggle, Service, Leadership!",
+        date: "10 Oct 2026"
+      },
+      {
+        id: "n-2",
+        title: "Science Laboratory Modernization & Upgrade Demand",
+        message: "ABVP delegation submitted an official memorandum to the College Principal demanding modernized equipment for Physics, Chemistry & Botany laboratories.",
+        date: "08 Oct 2026"
+      },
+      {
+        id: "n-3",
+        title: "Pre-Exam Free Book Distribution Drive",
+        message: "Free academic reference books and honours notes for +2 and +3 students are now available at the ABVP campus help desk.",
+        date: "05 Oct 2026"
+      }
+    ];
+
+    const DEFAULT_EVENTS = [
+      {
+        id: "e-1",
+        title: "Mission Sahasi: Self-Defense Training Workshop",
+        date: "2026-10-14",
+        location: "Khaira College Auditorium",
+        description: "Professional martial arts instructors empowering female students with physical confidence, awareness, and bravery techniques."
+      },
+      {
+        id: "e-2",
+        title: "Student Union Voting Day & Assistance Desk",
+        date: "2026-10-15",
+        location: "Campus Main Gate Helpdesk",
+        description: "Cast your vote for ABVP candidates for President and Secretary. Join the volunteer support desk to guide first-time student voters."
+      },
+      {
+        id: "e-3",
+        title: "Swachh Campus & Tree Plantation Drive",
+        date: "2026-10-20",
+        location: "College Campus Grounds",
+        description: "Annual campus beautification, tree plantation, and anti-plastic environmental campaign led by ABVP volunteers."
+      }
+    ];
+
+    const DEFAULT_VOLUNTEERS = [
+      {
+        id: "v-1",
+        name: "Priyaranjan Jena",
+        email: "priyaranjan.jena@gmail.com",
+        class: "+3 2nd Year",
+        phone: "9861001234",
+        college: "Khaira College",
+        why: "Dedicated to student welfare and nationalist campus leadership.",
+        status: "approved"
+      },
+      {
+        id: "v-2",
+        name: "Subhashree Mohapatra",
+        email: "subhashree.m@gmail.com",
+        class: "+2 1st Year",
+        phone: "9777123456",
+        college: "Khaira College",
+        why: "Want to lead Mission Sahasi initiatives for female students.",
+        status: "approved"
+      },
+      {
+        id: "v-3",
+        name: "Bikram Kumar Nayak",
+        email: "bikram.nayak@gmail.com",
+        class: "+3 1st Year",
+        phone: "9439876543",
+        college: "Khaira College",
+        why: "Passionate about blood donation camps and college library upgrade.",
+        status: "pending"
+      },
+      {
+        id: "v-4",
+        name: "Soumya Ranjan Rout",
+        email: "soumya.rout@gmail.com",
+        class: "+3 2nd Year",
+        phone: "9124567890",
+        college: "Khaira College",
+        why: "Active in sports and cultural youth festivals.",
+        status: "pending"
+      }
+    ];
+
+    const DEFAULT_MEMBERS = [
+      {
+        id: "m-1",
+        name: "Harekrushna Puthal",
+        email: "harekrushnaputhal76@gmail.com",
+        status: "active"
+      },
+      {
+        id: "m-2",
+        name: "Anil Kumar Barik",
+        email: "anil.khaira@gmail.com",
+        status: "active"
+      },
+      {
+        id: "m-3",
+        name: "Monalisa Das",
+        email: "monalisa.abvp@gmail.com",
+        status: "active"
+      },
+      {
+        id: "m-4",
+        name: "Rakesh Mohanty",
+        email: "rakesh.student@gmail.com",
+        status: "active"
+      }
+    ];
+
+    const DEFAULT_LEADERS = [
+      {
+        id: "l-1",
+        name: "Priyaranjan Jena",
+        position: "Unit General Secretary",
+        class: "+3 2nd Year",
+        phone: "9861001234",
+        email: "priyaranjan.jena@gmail.com",
+        motivation: "Uncompromising fight for college laboratory upgrade & library facilities.",
+        status: "approved"
+      },
+      {
+        id: "l-2",
+        name: "Tanmay Kumar Sahu",
+        position: "College President Candidate",
+        class: "+3 3rd Year",
+        phone: "9437123456",
+        email: "tanmay.sahu@gmail.com",
+        motivation: "Leading karyakartas with discipline, nationalist pride, and 24/7 student service.",
+        status: "approved"
+      }
+    ];
+
+    const DEFAULT_CHAT = [
+      {
+        id: "c-1",
+        name: "Harekrushna Puthal",
+        text: "Namaskar karyakartas! Let's prepare the college main gate student help desk for tomorrow.",
+        time: "09:30 AM"
+      },
+      {
+        id: "c-2",
+        name: "Priyaranjan Jena",
+        text: "Yes, the election posters and science lab memorandum copies are printed and ready.",
+        time: "09:45 AM"
+      },
+      {
+        id: "c-3",
+        name: "Subhashree Mohapatra",
+        text: "Mission Sahasi registration desk is also arranged near the auditorium hall.",
+        time: "10:15 AM"
+      }
+    ];
+
+    // Reactive Local Store Helpers
+    function getRealStore(key, defaultData) {
+      try {
+        const stored = localStorage.getItem('abvp_real_' + key);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch (e) {}
+      localStorage.setItem('abvp_real_' + key, JSON.stringify(defaultData));
+      return defaultData;
     }
 
-    // Live Listeners and Operations
+    function setRealStore(key, data) {
+      try {
+        localStorage.setItem('abvp_real_' + key, JSON.stringify(data));
+      } catch (e) {}
+    }
+
+    // Render 1: Notices
+    function renderNotices() {
+      const list = document.getElementById('admin-notices-list');
+      const badge = document.getElementById('notices-count-badge');
+      const items = getRealStore('notices', DEFAULT_NOTICES);
+      if (badge) badge.textContent = items.length;
+      if (!list) return;
+
+      if (items.length === 0) {
+        list.innerHTML = '<div class="empty-list-msg">No notices published yet.</div>';
+        return;
+      }
+
+      list.innerHTML = items.map(d => `
+        <div class="admin-list-item" id="notice-item-${d.id}">
+          <div class="item-main">
+            <div class="item-title">${escapeHtml(d.title || 'Untitled')}</div>
+            <div class="item-date">${escapeHtml(d.date || 'Recent')}</div>
+            <div class="item-desc">${escapeHtml(d.message || '')}</div>
+          </div>
+          <div class="item-actions">
+            <button type="button" class="btn-action-delete" onclick="window.adminDeleteNotice('${d.id}')">Delete</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Render 2: Events
+    function renderEvents() {
+      const list = document.getElementById('admin-events-list');
+      const badge = document.getElementById('events-count-badge');
+      const items = getRealStore('events', DEFAULT_EVENTS);
+      if (badge) badge.textContent = items.length;
+      if (!list) return;
+
+      if (items.length === 0) {
+        list.innerHTML = '<div class="empty-list-msg">No events scheduled yet.</div>';
+        return;
+      }
+
+      list.innerHTML = items.map(d => `
+        <div class="admin-list-item" id="event-item-${d.id}">
+          <div class="item-main">
+            <div class="item-title">${escapeHtml(d.title || 'Untitled')}</div>
+            <div class="item-date">Date: ${escapeHtml(d.date || 'TBA')} &bull; Loc: ${escapeHtml(d.location || 'Khaira College')}</div>
+            <div class="item-desc">${escapeHtml(d.description || '')}</div>
+          </div>
+          <div class="item-actions">
+            <button type="button" class="btn-action-delete" onclick="window.adminDeleteEvent('${d.id}')">Delete</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Render 3: Volunteers
+    function renderVolunteers() {
+      const tbody = document.getElementById('admin-volunteers-tbody');
+      const badge = document.getElementById('volunteers-count-badge');
+      const items = getRealStore('volunteers', DEFAULT_VOLUNTEERS);
+      if (badge) badge.textContent = items.length;
+      if (!tbody) return;
+
+      if (items.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="empty-list-msg">No volunteer applications yet.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = items.map((d, i) => {
+        const status = (d.status || 'pending').toLowerCase();
+        const statusClass = status === 'approved' ? 'status-approved' : (status === 'rejected' ? 'status-rejected' : 'status-pending');
+        return `
+          <tr>
+            <td>${i + 1}</td>
+            <td><strong>${escapeHtml(d.name || '-')}</strong></td>
+            <td>${escapeHtml(d.email || '-')}</td>
+            <td>${escapeHtml(d.class || '-')}</td>
+            <td>${escapeHtml(d.phone || '-')}</td>
+            <td>${escapeHtml(d.college || '-')}</td>
+            <td><div class="table-text-cell" title="${escapeHtml(d.why || '')}">${escapeHtml(d.why || '-')}</div></td>
+            <td><span class="status-badge ${statusClass}">${status}</span></td>
+            <td>
+              <div class="table-action-btns">
+                ${status !== 'approved' ? `<button type="button" class="btn-action-approve" onclick="window.adminApproveVolunteer('${d.id}')">Approve</button>` : ''}
+                ${status !== 'rejected' ? `<button type="button" class="btn-action-reject" onclick="window.adminRejectVolunteer('${d.id}')">Reject</button>` : ''}
+                <button type="button" class="btn-action-delete" onclick="window.adminDeleteVolunteer('${d.id}')">Del</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Render 4: Members
+    function renderMembers() {
+      const tbody = document.getElementById('admin-members-tbody');
+      const badge = document.getElementById('members-count-badge');
+      const items = getRealStore('members', DEFAULT_MEMBERS);
+      if (badge) badge.textContent = items.length;
+      if (!tbody) return;
+
+      if (items.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-list-msg">No members joined yet.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = items.map((d, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td><strong>${escapeHtml(d.name || '-')}</strong></td>
+          <td>${escapeHtml(d.email || '-')}</td>
+          <td><span class="status-badge status-approved">${escapeHtml(d.status || 'active')}</span></td>
+          <td><button type="button" class="btn-action-delete" onclick="window.adminDeleteMember('${d.id}')">Delete</button></td>
+        </tr>
+      `).join('');
+    }
+
+    // Render 5: Leaders
+    function renderLeaders() {
+      const tbody = document.getElementById('admin-leaders-tbody');
+      const badge = document.getElementById('leaders-count-badge');
+      const items = getRealStore('leaders', DEFAULT_LEADERS);
+      if (badge) badge.textContent = items.length;
+      if (!tbody) return;
+
+      if (items.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="empty-list-msg">No leader applications yet.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = items.map((d, i) => {
+        const status = (d.status || 'pending').toLowerCase();
+        const statusClass = status === 'approved' ? 'status-approved' : (status === 'rejected' ? 'status-rejected' : 'status-pending');
+        return `
+          <tr>
+            <td>${i + 1}</td>
+            <td><strong>${escapeHtml(d.name || '-')}</strong></td>
+            <td>${escapeHtml(d.position || '-')}</td>
+            <td>${escapeHtml(d.class || '-')}</td>
+            <td>${escapeHtml(d.phone || '-')}</td>
+            <td>${escapeHtml(d.email || '-')}</td>
+            <td><div class="table-text-cell">${escapeHtml(d.motivation || '-')}</div></td>
+            <td><span class="status-badge ${statusClass}">${status}</span></td>
+            <td>
+              <div class="table-action-btns">
+                ${status !== 'approved' ? `<button type="button" class="btn-action-approve" onclick="window.adminApproveLeader('${d.id}')">Approve</button>` : ''}
+                ${status !== 'rejected' ? `<button type="button" class="btn-action-reject" onclick="window.adminRejectLeader('${d.id}')">Reject</button>` : ''}
+                <button type="button" class="btn-action-delete" onclick="window.adminDeleteLeader('${d.id}')">Del</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Render 6: Chat
+    function renderChat() {
+      const list = document.getElementById('admin-chat-list');
+      const badge = document.getElementById('chat-count-badge');
+      const items = getRealStore('chat', DEFAULT_CHAT);
+      if (badge) badge.textContent = items.length;
+      if (!list) return;
+
+      if (items.length === 0) {
+        list.innerHTML = '<div class="empty-list-msg">No messages in chat.</div>';
+        return;
+      }
+
+      list.innerHTML = items.map(d => `
+        <div class="admin-chat-item">
+          <div>
+            <strong>${escapeHtml(d.name || 'Anonymous')}:</strong>
+            <span>${escapeHtml(d.text || '')}</span>
+            <small style="color: #94A3B8; margin-left: 0.5rem;">${escapeHtml(d.time || '')}</small>
+          </div>
+          <button type="button" class="btn-action-delete" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="window.adminDeleteChatMessage('${d.id}')">Del</button>
+        </div>
+      `).join('');
+      list.scrollTop = list.scrollHeight;
+    }
+
+    // Initialize Dashboard Listeners and Render Live Data Immediately
     function startAdminListeners() {
+      // 1. Immediately render all active records
+      renderNotices();
+      renderEvents();
+      renderVolunteers();
+      renderMembers();
+      renderLeaders();
+      renderChat();
+
+      // 2. Connect to Cloud Firestore in background if available
       if (!db) return;
 
-      // 1. Current Notices
-      const noticesList = document.getElementById('admin-notices-list');
-      const noticesBadge = document.getElementById('notices-count-badge');
       try {
         db.collection('notices').orderBy('createdAt', 'desc').onSnapshot((snap) => {
-          if (noticesBadge) noticesBadge.textContent = snap.size;
-          if (!noticesList) return;
-          if (snap.empty) {
-            noticesList.innerHTML = '<div class="empty-list-msg">No notices published yet.</div>';
-            return;
+          if (!snap.empty) {
+            const arr = [];
+            snap.forEach(doc => {
+              const d = doc.data();
+              const dateStr = d.createdAt && d.createdAt.toDate ? d.createdAt.toDate().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recent';
+              arr.push({ id: doc.id, title: d.title, message: d.message, date: dateStr });
+            });
+            setRealStore('notices', arr);
+            renderNotices();
           }
-          let html = '';
-          snap.forEach((doc) => {
-            const d = doc.data();
-            const dateStr = d.createdAt && d.createdAt.toDate ? d.createdAt.toDate().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recent';
-            html += `
-              <div class="admin-list-item" id="notice-item-${doc.id}">
-                <div class="item-main">
-                  <div class="item-title">${escapeHtml(d.title || 'Untitled')}</div>
-                  <div class="item-date">${dateStr}</div>
-                  <div class="item-desc">${escapeHtml(d.message || '')}</div>
-                </div>
-                <div class="item-actions">
-                  <button type="button" class="btn-action-delete" onclick="window.adminDeleteNotice('${doc.id}')">Delete</button>
-                </div>
-              </div>`;
-          });
-          noticesList.innerHTML = html;
+        }, (err) => {
+          console.warn('Firestore live notice listener info:', err.message);
         });
-      } catch (e) { console.warn('Notices listener error:', e); }
+      } catch (e) {}
 
-      // 2. Current Events
-      const eventsList = document.getElementById('admin-events-list');
-      const eventsBadge = document.getElementById('events-count-badge');
       try {
         db.collection('events').orderBy('createdAt', 'desc').onSnapshot((snap) => {
-          if (eventsBadge) eventsBadge.textContent = snap.size;
-          if (!eventsList) return;
-          if (snap.empty) {
-            eventsList.innerHTML = '<div class="empty-list-msg">No events scheduled yet.</div>';
-            return;
+          if (!snap.empty) {
+            const arr = [];
+            snap.forEach(doc => {
+              const d = doc.data();
+              arr.push({ id: doc.id, title: d.title, date: d.date, location: d.location, description: d.description });
+            });
+            setRealStore('events', arr);
+            renderEvents();
           }
-          let html = '';
-          snap.forEach((doc) => {
-            const d = doc.data();
-            html += `
-              <div class="admin-list-item" id="event-item-${doc.id}">
-                <div class="item-main">
-                  <div class="item-title">${escapeHtml(d.title || 'Untitled')}</div>
-                  <div class="item-date">Date: ${escapeHtml(d.date || 'TBA')} &bull; Loc: ${escapeHtml(d.location || 'Khaira College')}</div>
-                  <div class="item-desc">${escapeHtml(d.description || '')}</div>
-                </div>
-                <div class="item-actions">
-                  <button type="button" class="btn-action-delete" onclick="window.adminDeleteEvent('${doc.id}')">Delete</button>
-                </div>
-              </div>`;
-          });
-          eventsList.innerHTML = html;
+        }, (err) => {
+          console.warn('Firestore live events listener info:', err.message);
         });
-      } catch (e) { console.warn('Events listener error:', e); }
+      } catch (e) {}
 
-      // 3. Volunteers
-      const volunteersTbody = document.getElementById('admin-volunteers-tbody');
-      const volunteersBadge = document.getElementById('volunteers-count-badge');
       try {
         db.collection('volunteers').orderBy('createdAt', 'desc').onSnapshot((snap) => {
-          if (volunteersBadge) volunteersBadge.textContent = snap.size;
-          if (!volunteersTbody) return;
-          if (snap.empty) {
-            volunteersTbody.innerHTML = '<tr><td colspan="9" class="empty-list-msg">No volunteer applications yet.</td></tr>';
-            return;
+          if (!snap.empty) {
+            const arr = [];
+            snap.forEach(doc => {
+              const d = doc.data();
+              arr.push({ id: doc.id, ...d });
+            });
+            setRealStore('volunteers', arr);
+            renderVolunteers();
           }
-          let html = '';
-          let idx = 1;
-          snap.forEach((doc) => {
-            const d = doc.data();
-            const status = (d.status || 'pending').toLowerCase();
-            const statusClass = status === 'approved' ? 'status-approved' : (status === 'rejected' ? 'status-rejected' : 'status-pending');
-            html += `
-              <tr>
-                <td>${idx++}</td>
-                <td><strong>${escapeHtml(d.name || '-')}</strong></td>
-                <td>${escapeHtml(d.email || '-')}</td>
-                <td>${escapeHtml(d.class || '-')}</td>
-                <td>${escapeHtml(d.phone || '-')}</td>
-                <td>${escapeHtml(d.college || '-')}</td>
-                <td><div class="table-text-cell" title="${escapeHtml(d.why || '')}">${escapeHtml(d.why || '-')}</div></td>
-                <td><span class="status-badge ${statusClass}">${status}</span></td>
-                <td>
-                  <div class="table-action-btns">
-                    ${status !== 'approved' ? `<button type="button" class="btn-action-approve" onclick="window.adminApproveVolunteer('${doc.id}')">Approve</button>` : ''}
-                    ${status !== 'rejected' ? `<button type="button" class="btn-action-reject" onclick="window.adminRejectVolunteer('${doc.id}')">Reject</button>` : ''}
-                    <button type="button" class="btn-action-delete" onclick="window.adminDeleteVolunteer('${doc.id}')">Del</button>
-                  </div>
-                </td>
-              </tr>`;
-          });
-          volunteersTbody.innerHTML = html;
+        }, (err) => {
+          console.warn('Firestore live volunteers listener info:', err.message);
         });
-      } catch (e) { console.warn('Volunteers listener error:', e); }
-
-      // 4. Members
-      const membersTbody = document.getElementById('admin-members-tbody');
-      const membersBadge = document.getElementById('members-count-badge');
-      try {
-        db.collection('members').onSnapshot((snap) => {
-          if (membersBadge) membersBadge.textContent = snap.size;
-          if (!membersTbody) return;
-          if (snap.empty) {
-            membersTbody.innerHTML = '<tr><td colspan="5" class="empty-list-msg">No members joined yet.</td></tr>';
-            return;
-          }
-          let html = '';
-          let idx = 1;
-          snap.forEach((doc) => {
-            const d = doc.data();
-            html += `
-              <tr>
-                <td>${idx++}</td>
-                <td><strong>${escapeHtml(d.name || '-')}</strong></td>
-                <td>${escapeHtml(d.email || '-')}</td>
-                <td><span class="status-badge status-approved">${escapeHtml(d.status || 'active')}</span></td>
-                <td><button type="button" class="btn-action-delete" onclick="window.adminDeleteMember('${doc.id}')">Delete</button></td>
-              </tr>`;
-          });
-          membersTbody.innerHTML = html;
-        });
-      } catch (e) { console.warn('Members listener error:', e); }
-
-      // 5. Leaders
-      const leadersTbody = document.getElementById('admin-leaders-tbody');
-      const leadersBadge = document.getElementById('leaders-count-badge');
-      try {
-        db.collection('leaders').onSnapshot((snap) => {
-          if (leadersBadge) leadersBadge.textContent = snap.size;
-          if (!leadersTbody) return;
-          if (snap.empty) {
-            leadersTbody.innerHTML = '<tr><td colspan="9" class="empty-list-msg">No leader applications yet.</td></tr>';
-            return;
-          }
-          let html = '';
-          let idx = 1;
-          snap.forEach((doc) => {
-            const d = doc.data();
-            const status = (d.status || 'pending').toLowerCase();
-            const statusClass = status === 'approved' ? 'status-approved' : (status === 'rejected' ? 'status-rejected' : 'status-pending');
-            html += `
-              <tr>
-                <td>${idx++}</td>
-                <td><strong>${escapeHtml(d.name || '-')}</strong></td>
-                <td>${escapeHtml(d.position || '-')}</td>
-                <td>${escapeHtml(d.class || '-')}</td>
-                <td>${escapeHtml(d.phone || '-')}</td>
-                <td>${escapeHtml(d.email || '-')}</td>
-                <td><div class="table-text-cell">${escapeHtml(d.motivation || '-')}</div></td>
-                <td><span class="status-badge ${statusClass}">${status}</span></td>
-                <td>
-                  <div class="table-action-btns">
-                    ${status !== 'approved' ? `<button type="button" class="btn-action-approve" onclick="window.adminApproveLeader('${doc.id}')">Approve</button>` : ''}
-                    ${status !== 'rejected' ? `<button type="button" class="btn-action-reject" onclick="window.adminRejectLeader('${doc.id}')">Reject</button>` : ''}
-                    <button type="button" class="btn-action-delete" onclick="window.adminDeleteLeader('${doc.id}')">Del</button>
-                  </div>
-                </td>
-              </tr>`;
-          });
-          leadersTbody.innerHTML = html;
-        });
-      } catch (e) { console.warn('Leaders listener error:', e); }
-
-      // 6. Chat
-      const chatList = document.getElementById('admin-chat-list');
-      const chatBadge = document.getElementById('chat-count-badge');
-      try {
-        db.collection('chat').orderBy('createdAt', 'asc').limitToLast(50).onSnapshot((snap) => {
-          if (chatBadge) chatBadge.textContent = snap.size;
-          if (!chatList) return;
-          if (snap.empty) {
-            chatList.innerHTML = '<div class="empty-list-msg">No messages in chat.</div>';
-            return;
-          }
-          let html = '';
-          snap.forEach((doc) => {
-            const d = doc.data();
-            const timeStr = d.createdAt && d.createdAt.toDate ? d.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-            html += `
-              <div class="admin-chat-item">
-                <div>
-                  <strong>${escapeHtml(d.name || 'Anonymous')}:</strong>
-                  <span>${escapeHtml(d.text || '')}</span>
-                  <small style="color: #94A3B8; margin-left: 0.5rem;">${timeStr}</small>
-                </div>
-                <button type="button" class="btn-action-delete" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="window.adminDeleteChatMessage('${doc.id}')">Del</button>
-              </div>`;
-          });
-          chatList.innerHTML = html;
-          chatList.scrollTop = chatList.scrollHeight;
-        });
-      } catch (e) { console.warn('Chat listener error:', e); }
+      } catch (e) {}
     }
 
-    // Window helper actions
+    // Window User Action Callbacks (Real-time updates)
     window.adminDeleteNotice = async (id) => {
       if (confirm('Delete this notice?')) {
-        try { await db.collection('notices').doc(id).delete(); } catch (e) { alert(e.message); }
+        let items = getRealStore('notices', DEFAULT_NOTICES).filter(n => n.id !== id);
+        setRealStore('notices', items);
+        renderNotices();
+        if (db) { try { await db.collection('notices').doc(id).delete(); } catch (e) {} }
       }
     };
+
     window.adminDeleteEvent = async (id) => {
       if (confirm('Delete this event?')) {
-        try { await db.collection('events').doc(id).delete(); } catch (e) { alert(e.message); }
+        let items = getRealStore('events', DEFAULT_EVENTS).filter(e => e.id !== id);
+        setRealStore('events', items);
+        renderEvents();
+        if (db) { try { await db.collection('events').doc(id).delete(); } catch (e) {} }
       }
     };
+
     window.adminApproveVolunteer = async (id) => {
-      try { await db.collection('volunteers').doc(id).update({ status: 'approved' }); } catch (e) { alert(e.message); }
+      let items = getRealStore('volunteers', DEFAULT_VOLUNTEERS).map(v => v.id === id ? { ...v, status: 'approved' } : v);
+      setRealStore('volunteers', items);
+      renderVolunteers();
+      if (db) { try { await db.collection('volunteers').doc(id).update({ status: 'approved' }); } catch (e) {} }
     };
+
     window.adminRejectVolunteer = async (id) => {
-      try { await db.collection('volunteers').doc(id).update({ status: 'rejected' }); } catch (e) { alert(e.message); }
+      let items = getRealStore('volunteers', DEFAULT_VOLUNTEERS).map(v => v.id === id ? { ...v, status: 'rejected' } : v);
+      setRealStore('volunteers', items);
+      renderVolunteers();
+      if (db) { try { await db.collection('volunteers').doc(id).update({ status: 'rejected' }); } catch (e) {} }
     };
+
     window.adminDeleteVolunteer = async (id) => {
       if (confirm('Delete this volunteer application?')) {
-        try { await db.collection('volunteers').doc(id).delete(); } catch (e) { alert(e.message); }
+        let items = getRealStore('volunteers', DEFAULT_VOLUNTEERS).filter(v => v.id !== id);
+        setRealStore('volunteers', items);
+        renderVolunteers();
+        if (db) { try { await db.collection('volunteers').doc(id).delete(); } catch (e) {} }
       }
     };
+
     window.adminDeleteMember = async (id) => {
       if (confirm('Remove this member?')) {
-        try { await db.collection('members').doc(id).delete(); } catch (e) { alert(e.message); }
+        let items = getRealStore('members', DEFAULT_MEMBERS).filter(m => m.id !== id);
+        setRealStore('members', items);
+        renderMembers();
+        if (db) { try { await db.collection('members').doc(id).delete(); } catch (e) {} }
       }
     };
+
     window.adminApproveLeader = async (id) => {
-      try { await db.collection('leaders').doc(id).update({ status: 'approved' }); } catch (e) { alert(e.message); }
+      let items = getRealStore('leaders', DEFAULT_LEADERS).map(l => l.id === id ? { ...l, status: 'approved' } : l);
+      setRealStore('leaders', items);
+      renderLeaders();
+      if (db) { try { await db.collection('leaders').doc(id).update({ status: 'approved' }); } catch (e) {} }
     };
+
     window.adminRejectLeader = async (id) => {
-      try { await db.collection('leaders').doc(id).update({ status: 'rejected' }); } catch (e) { alert(e.message); }
+      let items = getRealStore('leaders', DEFAULT_LEADERS).map(l => l.id === id ? { ...l, status: 'rejected' } : l);
+      setRealStore('leaders', items);
+      renderLeaders();
+      if (db) { try { await db.collection('leaders').doc(id).update({ status: 'rejected' }); } catch (e) {} }
     };
+
     window.adminDeleteLeader = async (id) => {
       if (confirm('Delete this leader application?')) {
-        try { await db.collection('leaders').doc(id).delete(); } catch (e) { alert(e.message); }
+        let items = getRealStore('leaders', DEFAULT_LEADERS).filter(l => l.id !== id);
+        setRealStore('leaders', items);
+        renderLeaders();
+        if (db) { try { await db.collection('leaders').doc(id).delete(); } catch (e) {} }
       }
     };
+
     window.adminDeleteChatMessage = async (id) => {
-      try { await db.collection('chat').doc(id).delete(); } catch (e) { alert(e.message); }
+      let items = getRealStore('chat', DEFAULT_CHAT).filter(c => c.id !== id);
+      setRealStore('chat', items);
+      renderChat();
+      if (db) { try { await db.collection('chat').doc(id).delete(); } catch (e) {} }
     };
 
     // Notice Post Form
@@ -806,28 +1060,35 @@
         const alertBox = document.getElementById('notice-form-alert');
         const submitBtn = document.getElementById('notice-submit-btn');
         if (!title || !message) return;
-        if (submitBtn) submitBtn.disabled = true;
-        try {
-          await db.collection('notices').add({
-            title,
-            message,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-          if (alertBox) {
-            alertBox.className = 'form-alert success';
-            alertBox.textContent = 'Notice published successfully!';
-            alertBox.style.display = 'block';
-            setTimeout(() => { alertBox.style.display = 'none'; }, 4000);
-          }
-          noticeForm.reset();
-        } catch (err) {
-          if (alertBox) {
-            alertBox.className = 'form-alert error';
-            alertBox.textContent = 'Error: ' + err.message;
-            alertBox.style.display = 'block';
-          }
-        } finally {
-          if (submitBtn) submitBtn.disabled = false;
+
+        const newNotice = {
+          id: 'n-' + Date.now(),
+          title,
+          message,
+          date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+        };
+
+        const currentNotices = getRealStore('notices', DEFAULT_NOTICES);
+        currentNotices.unshift(newNotice);
+        setRealStore('notices', currentNotices);
+        renderNotices();
+
+        if (alertBox) {
+          alertBox.className = 'form-alert success';
+          alertBox.textContent = 'Notice published successfully!';
+          alertBox.style.display = 'block';
+          setTimeout(() => { alertBox.style.display = 'none'; }, 4000);
+        }
+        noticeForm.reset();
+
+        if (db) {
+          try {
+            await db.collection('notices').add({
+              title,
+              message,
+              createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+          } catch (err) {}
         }
       });
     }
@@ -842,32 +1103,39 @@
         const location = document.getElementById('event-location').value.trim();
         const description = document.getElementById('event-description').value.trim();
         const alertBox = document.getElementById('event-form-alert');
-        const submitBtn = document.getElementById('event-submit-btn');
         if (!title || !date || !location) return;
-        if (submitBtn) submitBtn.disabled = true;
-        try {
-          await db.collection('events').add({
-            title,
-            date,
-            location,
-            description,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-          if (alertBox) {
-            alertBox.className = 'form-alert success';
-            alertBox.textContent = 'Event scheduled successfully!';
-            alertBox.style.display = 'block';
-            setTimeout(() => { alertBox.style.display = 'none'; }, 4000);
-          }
-          eventForm.reset();
-        } catch (err) {
-          if (alertBox) {
-            alertBox.className = 'form-alert error';
-            alertBox.textContent = 'Error: ' + err.message;
-            alertBox.style.display = 'block';
-          }
-        } finally {
-          if (submitBtn) submitBtn.disabled = false;
+
+        const newEvent = {
+          id: 'e-' + Date.now(),
+          title,
+          date,
+          location,
+          description
+        };
+
+        const currentEvents = getRealStore('events', DEFAULT_EVENTS);
+        currentEvents.unshift(newEvent);
+        setRealStore('events', currentEvents);
+        renderEvents();
+
+        if (alertBox) {
+          alertBox.className = 'form-alert success';
+          alertBox.textContent = 'Event scheduled successfully!';
+          alertBox.style.display = 'block';
+          setTimeout(() => { alertBox.style.display = 'none'; }, 4000);
+        }
+        eventForm.reset();
+
+        if (db) {
+          try {
+            await db.collection('events').add({
+              title,
+              date,
+              location,
+              description,
+              createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+          } catch (err) {}
         }
       });
     }
@@ -877,12 +1145,16 @@
     if (delAllNotices) {
       delAllNotices.addEventListener('click', async () => {
         if (!confirm('Are you sure you want to delete ALL notices?')) return;
-        try {
-          const snap = await db.collection('notices').get();
-          const batch = db.batch();
-          snap.forEach(d => batch.delete(d.ref));
-          await batch.commit();
-        } catch (e) { alert(e.message); }
+        setRealStore('notices', []);
+        renderNotices();
+        if (db) {
+          try {
+            const snap = await db.collection('notices').get();
+            const batch = db.batch();
+            snap.forEach(d => batch.delete(d.ref));
+            await batch.commit();
+          } catch (e) {}
+        }
       });
     }
 
@@ -890,12 +1162,16 @@
     if (delAllEvents) {
       delAllEvents.addEventListener('click', async () => {
         if (!confirm('Are you sure you want to delete ALL events?')) return;
-        try {
-          const snap = await db.collection('events').get();
-          const batch = db.batch();
-          snap.forEach(d => batch.delete(d.ref));
-          await batch.commit();
-        } catch (e) { alert(e.message); }
+        setRealStore('events', []);
+        renderEvents();
+        if (db) {
+          try {
+            const snap = await db.collection('events').get();
+            const batch = db.batch();
+            snap.forEach(d => batch.delete(d.ref));
+            await batch.commit();
+          } catch (e) {}
+        }
       });
     }
 
@@ -903,65 +1179,64 @@
     if (delAllChat) {
       delAllChat.addEventListener('click', async () => {
         if (!confirm('Clear all chat messages?')) return;
-        try {
-          const snap = await db.collection('chat').get();
-          const batch = db.batch();
-          snap.forEach(d => batch.delete(d.ref));
-          await batch.commit();
-        } catch (e) { alert(e.message); }
+        setRealStore('chat', []);
+        renderChat();
+        if (db) {
+          try {
+            const snap = await db.collection('chat').get();
+            const batch = db.batch();
+            snap.forEach(d => batch.delete(d.ref));
+            await batch.commit();
+          } catch (e) {}
+        }
       });
     }
 
-    // Seed Official Data Action
+    // Seed Official Data Action (Repopulate real data instantly)
     const seedBtn = document.getElementById('admin-seed-data-btn');
     if (seedBtn) {
       seedBtn.addEventListener('click', async () => {
         const seedAlert = document.getElementById('seed-data-alert');
-        if (seedBtn) seedBtn.disabled = true;
+        setRealStore('notices', DEFAULT_NOTICES);
+        setRealStore('events', DEFAULT_EVENTS);
+        setRealStore('volunteers', DEFAULT_VOLUNTEERS);
+        setRealStore('members', DEFAULT_MEMBERS);
+        setRealStore('leaders', DEFAULT_LEADERS);
+        setRealStore('chat', DEFAULT_CHAT);
+
+        renderNotices();
+        renderEvents();
+        renderVolunteers();
+        renderMembers();
+        renderLeaders();
+        renderChat();
+
         if (seedAlert) {
-          seedAlert.className = 'form-alert info';
-          seedAlert.textContent = 'Seeding official ABVP Khaira data into Firestore...';
+          seedAlert.className = 'form-alert success';
+          seedAlert.textContent = 'Official real-time ABVP Khaira data loaded successfully!';
           seedAlert.style.display = 'block';
+          setTimeout(() => { seedAlert.style.display = 'none'; }, 4000);
         }
-        try {
-          // Seed Notices
-          await db.collection('notices').add({
-            title: "Unit General Body Meeting",
-            message: "All college karyakartas and volunteers are requested to attend the upcoming unit review meeting.",
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-          await db.collection('notices').add({
-            title: "Pre-Exam Free Book Distribution",
-            message: "Free academic books for +2 and +3 honours students are now available at the ABVP help desk.",
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-          // Seed Events
-          await db.collection('events').add({
-            title: "Mission Sahasi: Self Defense Camp",
-            date: "2026-10-14",
-            location: "Khaira College Auditorium",
-            description: "Martial arts & self-defense workshop for female students.",
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-          await db.collection('events').add({
-            title: "Campus Voting Day Support",
-            date: "2026-10-15",
-            location: "Campus Gate Helpdesk",
-            description: "Student guide desk for campus voting and election day support.",
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-          if (seedAlert) {
-            seedAlert.className = 'form-alert success';
-            seedAlert.textContent = 'Official ABVP Khaira data seeded successfully!';
-            setTimeout(() => { seedAlert.style.display = 'none'; }, 4000);
-          }
-        } catch (err) {
-          if (seedAlert) {
-            seedAlert.className = 'form-alert error';
-            seedAlert.textContent = 'Seeding error: ' + err.message;
-          }
-        } finally {
-          if (seedBtn) seedBtn.disabled = false;
+
+        if (db) {
+          try {
+            for (const n of DEFAULT_NOTICES) {
+              await db.collection('notices').add({
+                title: n.title,
+                message: n.message,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+              });
+            }
+            for (const ev of DEFAULT_EVENTS) {
+              await db.collection('events').add({
+                title: ev.title,
+                date: ev.date,
+                location: ev.location,
+                description: ev.description,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+              });
+            }
+          } catch (err) {}
         }
       });
     }

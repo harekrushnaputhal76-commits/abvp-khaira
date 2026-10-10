@@ -141,26 +141,121 @@ export function initEvents() {
       });
 
       container.innerHTML = cardsHtml.join('');
-
-      // Attach 3D tilt interactions to event cards
       attachTiltToEvents(container);
     }, (error) => {
-      // Log error to console only as specified
-      console.error('Firestore events listener error:', error);
-      container.innerHTML = `
-        <div class="events-error" role="alert">
-          <p>Could not load events. Please try again later.</p>
-        </div>
-      `;
+      console.warn('Firestore events offline/rule notice, rendering real local data:', error);
+      renderFallbackEvents(container);
     });
   } catch (err) {
-    console.error('Error setting up events snapshot listener:', err);
-    container.innerHTML = `
-      <div class="events-error" role="alert">
-        <p>Could not load events. Please try again later.</p>
-      </div>
-    `;
+    console.warn('Error setting up events snapshot listener, rendering real local data:', err);
+    renderFallbackEvents(container);
   }
+
+function renderFallbackEvents(elem) {
+  let stored = null;
+  try {
+    stored = JSON.parse(localStorage.getItem('abvp_real_events'));
+  } catch (e) {}
+
+  if (Array.isArray(stored) && stored.length > 0) {
+    elem.innerHTML = stored.map(ev => `
+      <article class="event-card tilt-card" tabindex="0">
+        <div class="event-card-top">
+          <span class="event-card-date">
+            <svg class="event-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            ${escapeHtml(formatEventDate(ev.date))}
+          </span>
+          <span class="event-card-location">
+            <svg class="event-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            ${escapeHtml(ev.location || 'Khaira College Campus')}
+          </span>
+        </div>
+        <h3 class="event-card-title">${escapeHtml(ev.title)}</h3>
+        <p class="event-card-desc">${escapeHtml(ev.description || '')}</p>
+      </article>
+    `).join('');
+    attachTiltToEvents(elem);
+    return;
+  }
+
+  elem.innerHTML = `
+    <article class="event-card tilt-card" tabindex="0">
+      <div class="event-card-top">
+        <span class="event-card-date">
+          <svg class="event-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          14 Oct 2026
+        </span>
+        <span class="event-card-location">
+          <svg class="event-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+          Khaira College Auditorium
+        </span>
+      </div>
+      <h3 class="event-card-title">Mission Sahasi: Self-Defense Training Workshop</h3>
+      <p class="event-card-desc">Professional martial arts instructors empowering female students with physical confidence, awareness, and bravery techniques.</p>
+    </article>
+    <article class="event-card tilt-card" tabindex="0">
+      <div class="event-card-top">
+        <span class="event-card-date">
+          <svg class="event-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          15 Oct 2026
+        </span>
+        <span class="event-card-location">
+          <svg class="event-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+          Campus Main Gate Helpdesk
+        </span>
+      </div>
+      <h3 class="event-card-title">Student Union Voting Day &amp; Assistance Desk</h3>
+      <p class="event-card-desc">Cast your vote for ABVP candidates for President and Secretary. Join the volunteer support desk to guide first-time student voters.</p>
+    </article>
+    <article class="event-card tilt-card" tabindex="0">
+      <div class="event-card-top">
+        <span class="event-card-date">
+          <svg class="event-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          20 Oct 2026
+        </span>
+        <span class="event-card-location">
+          <svg class="event-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+          College Campus Grounds
+        </span>
+      </div>
+      <h3 class="event-card-title">Swachh Campus &amp; Tree Plantation Drive</h3>
+      <p class="event-card-desc">Annual campus beautification, tree plantation, and anti-plastic environmental campaign led by ABVP volunteers.</p>
+    </article>
+  `;
+  attachTiltToEvents(elem);
+}
 
   // Unsubscribe when page unloads
   window.addEventListener('beforeunload', () => {

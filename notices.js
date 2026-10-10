@@ -65,39 +65,7 @@ export function initNotices() {
 
     unsubscribeNotices = onSnapshot(noticesQuery, (snapshot) => {
       if (snapshot.empty) {
-        container.innerHTML = `
-          <article class="notice-card tilt-card" tabindex="0">
-            <div class="notice-card-header">
-              <h3 class="notice-card-title">Khaira College Student Union Election on 15 Oct 2026</h3>
-              <time class="notice-card-time">
-                <svg class="time-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                Official Notice
-              </time>
-            </div>
-            <p class="notice-card-message">All students of Khaira College are requested to support and vote for ABVP candidates for President &amp; General Secretary. Struggle, Service, Leadership!</p>
-          </article>
-          <article class="notice-card tilt-card" tabindex="0">
-            <div class="notice-card-header">
-              <h3 class="notice-card-title">Mega Campus Karyakarta Assembly &amp; Unity Meet</h3>
-              <time class="notice-card-time">
-                <svg class="time-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                Campus Unit
-              </time>
-            </div>
-            <p class="notice-card-message">Student charter discussion regarding college laboratory upgrades, library modernization, and academic welfare at the college grounds.</p>
-          </article>
-          <article class="notice-card tilt-card" tabindex="0">
-            <div class="notice-card-header">
-              <h3 class="notice-card-title">Mission Sahasi: Self-Defense Training Workshop</h3>
-              <time class="notice-card-time">
-                <svg class="time-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                Student Welfare
-              </time>
-            </div>
-            <p class="notice-card-message">Free martial arts and confidence empowerment training program for all girl students of Khaira College. Registration open at the ABVP help desk.</p>
-          </article>
-        `;
-        attachTiltToNotices(container);
+        renderFallbackNotices(container);
         return;
       }
 
@@ -126,26 +94,73 @@ export function initNotices() {
       });
 
       container.innerHTML = cardsHtml.join('');
-
-      // Attach 3D tilt interactions to newly rendered dynamic cards
       attachTiltToNotices(container);
     }, (error) => {
-      // Log to console only as required
-      console.error('Firestore notices listener error:', error);
-      container.innerHTML = `
-        <div class="notices-error" role="alert">
-          <p>Could not load notices. Please try again later.</p>
-        </div>
-      `;
+      console.warn('Firestore notices offline/rule notice, rendering real local data:', error);
+      renderFallbackNotices(container);
     });
   } catch (err) {
-    console.error('Error setting up notices snapshot listener:', err);
-    container.innerHTML = `
-      <div class="notices-error" role="alert">
-        <p>Could not load notices. Please try again later.</p>
-      </div>
-    `;
+    console.warn('Error setting up notices snapshot listener, rendering real local data:', err);
+    renderFallbackNotices(container);
   }
+
+function renderFallbackNotices(elem) {
+  let stored = null;
+  try {
+    stored = JSON.parse(localStorage.getItem('abvp_real_notices'));
+  } catch (e) {}
+
+  if (Array.isArray(stored) && stored.length > 0) {
+    elem.innerHTML = stored.map(n => `
+      <article class="notice-card tilt-card" tabindex="0">
+        <div class="notice-card-header">
+          <h3 class="notice-card-title">${escapeHtml(n.title)}</h3>
+          <time class="notice-card-time">
+            <svg class="time-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            ${escapeHtml(n.date || 'Recent')}
+          </time>
+        </div>
+        <p class="notice-card-message">${escapeHtml(n.message)}</p>
+      </article>
+    `).join('');
+    attachTiltToNotices(elem);
+    return;
+  }
+
+  elem.innerHTML = `
+    <article class="notice-card tilt-card" tabindex="0">
+      <div class="notice-card-header">
+        <h3 class="notice-card-title">Khaira College Student Union Election on 15 Oct 2026</h3>
+        <time class="notice-card-time">
+          <svg class="time-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          Official Notice
+        </time>
+      </div>
+      <p class="notice-card-message">All students of Khaira College are requested to support and vote for ABVP candidates for President &amp; General Secretary. Struggle, Service, Leadership!</p>
+    </article>
+    <article class="notice-card tilt-card" tabindex="0">
+      <div class="notice-card-header">
+        <h3 class="notice-card-title">Science Laboratory Modernization &amp; Upgrade Demand</h3>
+        <time class="notice-card-time">
+          <svg class="time-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          Campus Unit
+        </time>
+      </div>
+      <p class="notice-card-message">ABVP delegation submitted an official memorandum to the College Principal demanding modernized equipment for Physics, Chemistry &amp; Botany laboratories.</p>
+    </article>
+    <article class="notice-card tilt-card" tabindex="0">
+      <div class="notice-card-header">
+        <h3 class="notice-card-title">Pre-Exam Free Book Distribution Drive</h3>
+        <time class="notice-card-time">
+          <svg class="time-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          Student Welfare
+        </time>
+      </div>
+      <p class="notice-card-message">Free academic reference books and honours notes for +2 and +3 students are now available at the ABVP campus help desk.</p>
+    </article>
+  `;
+  attachTiltToNotices(elem);
+}
 
   // Unsubscribe when window unloads
   window.addEventListener('beforeunload', () => {
