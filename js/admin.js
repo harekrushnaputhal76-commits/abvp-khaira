@@ -1,7 +1,8 @@
 // Admin Panel Controller for ABVP Khaira College Unit (Real Cloud Firestore Only)
 import { auth, db } from './firebase.js';
 import {
-  signInWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
   signOut,
   onAuthStateChanged
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
@@ -67,7 +68,7 @@ function initAuthObserver() {
       if (email === ADMIN_EMAIL.toLowerCase()) {
         activateAdminDashboard(user.email);
       } else {
-        showLoginAlert(`Access denied. Signed in as ${user.email}, but only ${ADMIN_EMAIL} is authorized.`);
+        showLoginAlert(`Access denied. Signed in as ${user.email}, but this account is not authorized as Admin.`);
         deactivateAdminDashboard();
         try {
           await signOut(auth);
@@ -82,60 +83,40 @@ function initAuthObserver() {
 }
 
 /**
- * 2. Login Form (Email & Password Only)
+ * 2. Login Form (Direct Google Sign-In for Admin)
  */
 function initLoginForm() {
-  const form = document.getElementById('admin-login-form');
-  const emailInput = document.getElementById('admin-email');
-  const passwordInput = document.getElementById('admin-password');
-  const submitBtn = document.getElementById('admin-login-btn');
+  const googleBtn = document.getElementById('admin-google-login-btn');
+  if (!googleBtn) return;
 
-  if (!form) return;
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
+  googleBtn.addEventListener('click', async () => {
     showLoginAlert('');
-
-    const email = emailInput ? emailInput.value.trim() : '';
-    const password = passwordInput ? passwordInput.value : '';
-
-    if (!email || !password) {
-      showLoginAlert('Please enter both your admin email address and password.');
-      return;
-    }
-
-    if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
-      showLoginAlert(`Access denied. ${email} is not authorized as Unit Administrator.`);
-      return;
-    }
-
     setLoginSubmitting(true);
 
     try {
-      const cred = await signInWithEmailAndPassword(auth, email, password);
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      const cred = await signInWithPopup(auth, provider);
       const user = cred.user;
       const userEmail = (user.email || '').toLowerCase().trim();
 
       if (userEmail === ADMIN_EMAIL.toLowerCase()) {
         activateAdminDashboard(user.email);
-        if (passwordInput) passwordInput.value = '';
       } else {
-        showLoginAlert(`Access denied. Only ${ADMIN_EMAIL} is authorized.`);
+        showLoginAlert(`Access denied. Signed in as ${user.email}, but this account is not authorized.`);
         await signOut(auth);
       }
     } catch (err) {
-      console.warn('Admin sign-in failure:', err);
-      let msg = 'Authentication failed. Please verify your credentials.';
-      if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
-        msg = 'Invalid email or password. Please re-enter your administrative credentials.';
-      } else if (err.code === 'auth/too-many-requests') {
-        msg = 'Too many failed login attempts. Please wait a few minutes before trying again.';
-      } else if (err.code === 'auth/network-request-failed') {
-        msg = 'Network connection error. Please check your internet connection.';
-      } else if (err.message) {
-        msg = err.message;
+      console.warn('Google admin sign-in error:', err);
+      if (err.code === 'auth/popup-closed-by-user') {
+        showLoginAlert('Sign-in window was closed before completion. Please try again.');
+      } else if (err.code === 'auth/cancelled-popup-request') {
+        // Ignored
+      } else if (err.code === 'auth/unauthorized-domain') {
+        showLoginAlert('This domain is not authorized in Firebase Console.');
+      } else {
+        showLoginAlert('Login error: ' + (err.message || err.code));
       }
-      showLoginAlert(msg);
     } finally {
       setLoginSubmitting(false);
     }
@@ -143,12 +124,12 @@ function initLoginForm() {
 }
 
 function setLoginSubmitting(isSubmitting) {
-  const btn = document.getElementById('admin-login-btn');
+  const btn = document.getElementById('admin-google-login-btn');
   if (!btn) return;
   btn.disabled = isSubmitting;
   const textElem = btn.querySelector('.btn-text');
   const spinnerElem = btn.querySelector('.btn-spinner');
-  if (textElem) textElem.textContent = isSubmitting ? 'Authenticating...' : 'Sign In';
+  if (textElem) textElem.textContent = isSubmitting ? 'Signing in with Google...' : 'Sign in with Google';
   if (spinnerElem) spinnerElem.style.display = isSubmitting ? 'inline-block' : 'none';
 }
 
