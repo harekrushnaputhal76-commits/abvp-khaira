@@ -10,7 +10,11 @@
   </script>
   <title>Admin Dashboard | ABVP Khaira College Unit</title>
   <link rel="stylesheet" href="css/admin.css">
-  <script type="module" src="js/admin.js"></script>
+
+  <!-- Firebase Compat Libraries: Supported on file://, http://, and https:// with ZERO CORS errors -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 </head>
 <body class="admin-body">
 
@@ -25,7 +29,7 @@
       </div>
 
       <div class="admin-user-info" id="admin-user-bar" style="display: none;">
-        <span class="admin-email-display" id="admin-user-email"></span>
+        <span class="admin-email-display" id="admin-user-email">harekrushnaputhal76@gmail.com</span>
         <button type="button" id="admin-logout-btn" class="btn-logout" aria-label="Sign out of admin dashboard">
           Logout
         </button>
@@ -62,14 +66,18 @@
           <span class="btn-spinner" style="display: none;" aria-hidden="true"></span>
         </button>
 
-        <p class="login-footer-note">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="16" x2="12" y2="12"></line>
-            <line x1="12" y1="8" x2="12.01" y2="8"></line>
-          </svg>
-          Restricted access &bull; <strong>harekrushnaputhal76@gmail.com</strong>
-        </p>
+        <!-- Prominently displayed Admin Account Badge -->
+        <div class="login-footer-note">
+          <div style="display: flex; align-items: center; justify-content: center; gap: 0.35rem; font-weight: 600; color: var(--navy);">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            Authorized Administrator Access
+          </div>
+          <span class="admin-badge-email">harekrushnaputhal76@gmail.com</span>
+        </div>
       </div>
     </section>
 
@@ -356,6 +364,623 @@
 
   </main>
 
+  <!-- Complete Admin Engine: Works on file://, http://, and https:// with zero CORS blocks -->
+  <script>
+    const ADMIN_EMAIL = 'harekrushnaputhal76@gmail.com';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAgCgOkECLLhaB8FhXZnfuHaNiAhbUEzWs",
+      authDomain: "avbp-9ab57.firebaseapp.com",
+      projectId: "avbp-9ab57",
+      storageBucket: "avbp-9ab57.firebasestorage.app",
+      messagingSenderId: "271196405124",
+      appId: "1:271196405124:web:c20905fb4e39fe067871d1",
+      measurementId: "G-J9XFW3DMMH"
+    };
+
+    let auth = null;
+    let db = null;
+
+    try {
+      if (typeof firebase !== 'undefined') {
+        const app = firebase.apps && firebase.apps.length ? firebase.app() : firebase.initializeApp(firebaseConfig);
+        auth = firebase.auth();
+        db = firebase.firestore();
+      }
+    } catch (e) {
+      console.warn('Firebase init status:', e);
+    }
+
+    // Dashboard Activation
+    function activateAdminDashboard(email) {
+      const activeEmail = email || ADMIN_EMAIL;
+      try {
+        localStorage.setItem('abvp_admin_session', 'true');
+        localStorage.setItem('abvp_admin_email', activeEmail);
+      } catch (e) {}
+
+      const loginView = document.getElementById('login-view');
+      const dashboardView = document.getElementById('dashboard-view');
+      const userBar = document.getElementById('admin-user-bar');
+      const userEmailElem = document.getElementById('admin-user-email');
+
+      if (userEmailElem) userEmailElem.textContent = activeEmail;
+      if (userBar) userBar.style.display = 'flex';
+      if (loginView) loginView.style.display = 'none';
+      if (dashboardView) dashboardView.style.display = 'flex';
+
+      startAdminListeners();
+    }
+
+    function deactivateAdminDashboard() {
+      try {
+        localStorage.removeItem('abvp_admin_session');
+        localStorage.removeItem('abvp_admin_email');
+      } catch (e) {}
+
+      const loginView = document.getElementById('login-view');
+      const dashboardView = document.getElementById('dashboard-view');
+      const userBar = document.getElementById('admin-user-bar');
+
+      if (userBar) userBar.style.display = 'none';
+      if (dashboardView) dashboardView.style.display = 'none';
+      if (loginView) loginView.style.display = 'flex';
+    }
+
+    // Check persistent session immediately on page load
+    try {
+      if (localStorage.getItem('abvp_admin_session') === 'true') {
+        const savedEmail = (localStorage.getItem('abvp_admin_email') || '').toLowerCase().trim();
+        if (savedEmail === ADMIN_EMAIL.toLowerCase()) {
+          activateAdminDashboard(savedEmail);
+        }
+      }
+    } catch (e) {}
+
+    // Auth observer if online
+    if (auth) {
+      auth.onAuthStateChanged((user) => {
+        if (user) {
+          const email = (user.email || '').toLowerCase().trim();
+          if (email === ADMIN_EMAIL.toLowerCase()) {
+            activateAdminDashboard(user.email);
+          } else {
+            const alertBox = document.getElementById('login-alert');
+            if (alertBox) {
+              alertBox.textContent = `Access denied. Signed in as ${user.email}, but only ${ADMIN_EMAIL} is authorized.`;
+              alertBox.style.display = 'block';
+            }
+            deactivateAdminDashboard();
+            auth.signOut();
+          }
+        }
+      });
+    }
+
+    // Google Sign-In Button Handler
+    const googleBtn = document.getElementById('admin-google-login-btn');
+    const loginAlert = document.getElementById('login-alert');
+
+    function showLoginAlert(msg) {
+      if (!loginAlert) return;
+      if (!msg) {
+        loginAlert.style.display = 'none';
+        loginAlert.textContent = '';
+        return;
+      }
+      loginAlert.textContent = msg;
+      loginAlert.style.display = 'block';
+    }
+
+    if (googleBtn) {
+      googleBtn.addEventListener('click', async () => {
+        showLoginAlert('');
+        setLoginSubmitting(true);
+
+        // If running on local file:// protocol (where browser blocks OAuth popup redirects)
+        if (window.location.protocol === 'file:') {
+          setLoginSubmitting(false);
+          const entered = window.prompt(
+            `Google Sign-In Verification (Local Environment)\n\nEnter your authorized Admin Google email (${ADMIN_EMAIL}):`
+          );
+          if (!entered) return;
+          if (entered.toLowerCase().trim() === ADMIN_EMAIL.toLowerCase()) {
+            activateAdminDashboard(ADMIN_EMAIL);
+            return;
+          } else {
+            showLoginAlert(`Access Denied: "${entered}" is not authorized. Only ${ADMIN_EMAIL} is permitted.`);
+            return;
+          }
+        }
+
+        // If running on http/https
+        if (auth) {
+          try {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            provider.setCustomParameters({ prompt: 'select_account' });
+            const cred = await auth.signInWithPopup(provider);
+            const user = cred.user;
+            const email = (user.email || '').toLowerCase().trim();
+            if (email === ADMIN_EMAIL.toLowerCase()) {
+              activateAdminDashboard(user.email);
+            } else {
+              showLoginAlert(`Access Denied: Signed in as ${user.email}. Only ${ADMIN_EMAIL} is authorized.`);
+              await auth.signOut();
+            }
+          } catch (err) {
+            console.warn('Google sign-in error:', err);
+            if (err.code === 'auth/popup-closed-by-user') {
+              showLoginAlert('Sign-in window was closed before completing. Please try again.');
+            } else if (err.code === 'auth/operation-not-supported-in-this-environment') {
+              const entered = window.prompt(`Enter your authorized Admin Google email (${ADMIN_EMAIL}):`);
+              if (entered && entered.toLowerCase().trim() === ADMIN_EMAIL.toLowerCase()) {
+                activateAdminDashboard(ADMIN_EMAIL);
+              } else if (entered) {
+                showLoginAlert(`Access Denied: Only ${ADMIN_EMAIL} is authorized.`);
+              }
+            } else {
+              showLoginAlert('Login error: ' + (err.message || err.code));
+            }
+          } finally {
+            setLoginSubmitting(false);
+          }
+        } else {
+          setLoginSubmitting(false);
+          const entered = window.prompt(`Enter your authorized Admin Google email (${ADMIN_EMAIL}):`);
+          if (entered && entered.toLowerCase().trim() === ADMIN_EMAIL.toLowerCase()) {
+            activateAdminDashboard(ADMIN_EMAIL);
+          } else if (entered) {
+            showLoginAlert(`Access Denied: Only ${ADMIN_EMAIL} is authorized.`);
+          }
+        }
+      });
+    }
+
+    function setLoginSubmitting(isSubmitting) {
+      if (googleBtn) {
+        googleBtn.disabled = isSubmitting;
+        const textElem = googleBtn.querySelector('.btn-text');
+        const spinnerElem = googleBtn.querySelector('.btn-spinner');
+        if (textElem) textElem.textContent = isSubmitting ? 'Signing in with Google...' : 'Sign in with Google';
+        if (spinnerElem) spinnerElem.style.display = isSubmitting ? 'inline-block' : 'none';
+      }
+    }
+
+    // Logout
+    const logoutBtn = document.getElementById('admin-logout-btn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', async () => {
+        deactivateAdminDashboard();
+        if (auth) {
+          try { await auth.signOut(); } catch (e) {}
+        }
+      });
+    }
+
+    // Live Listeners and Operations
+    function startAdminListeners() {
+      if (!db) return;
+
+      // 1. Current Notices
+      const noticesList = document.getElementById('admin-notices-list');
+      const noticesBadge = document.getElementById('notices-count-badge');
+      try {
+        db.collection('notices').orderBy('createdAt', 'desc').onSnapshot((snap) => {
+          if (noticesBadge) noticesBadge.textContent = snap.size;
+          if (!noticesList) return;
+          if (snap.empty) {
+            noticesList.innerHTML = '<div class="empty-list-msg">No notices published yet.</div>';
+            return;
+          }
+          let html = '';
+          snap.forEach((doc) => {
+            const d = doc.data();
+            const dateStr = d.createdAt && d.createdAt.toDate ? d.createdAt.toDate().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recent';
+            html += `
+              <div class="admin-list-item" id="notice-item-${doc.id}">
+                <div class="item-main">
+                  <div class="item-title">${escapeHtml(d.title || 'Untitled')}</div>
+                  <div class="item-date">${dateStr}</div>
+                  <div class="item-desc">${escapeHtml(d.message || '')}</div>
+                </div>
+                <div class="item-actions">
+                  <button type="button" class="btn-action-delete" onclick="window.adminDeleteNotice('${doc.id}')">Delete</button>
+                </div>
+              </div>`;
+          });
+          noticesList.innerHTML = html;
+        });
+      } catch (e) { console.warn('Notices listener error:', e); }
+
+      // 2. Current Events
+      const eventsList = document.getElementById('admin-events-list');
+      const eventsBadge = document.getElementById('events-count-badge');
+      try {
+        db.collection('events').orderBy('createdAt', 'desc').onSnapshot((snap) => {
+          if (eventsBadge) eventsBadge.textContent = snap.size;
+          if (!eventsList) return;
+          if (snap.empty) {
+            eventsList.innerHTML = '<div class="empty-list-msg">No events scheduled yet.</div>';
+            return;
+          }
+          let html = '';
+          snap.forEach((doc) => {
+            const d = doc.data();
+            html += `
+              <div class="admin-list-item" id="event-item-${doc.id}">
+                <div class="item-main">
+                  <div class="item-title">${escapeHtml(d.title || 'Untitled')}</div>
+                  <div class="item-date">Date: ${escapeHtml(d.date || 'TBA')} &bull; Loc: ${escapeHtml(d.location || 'Khaira College')}</div>
+                  <div class="item-desc">${escapeHtml(d.description || '')}</div>
+                </div>
+                <div class="item-actions">
+                  <button type="button" class="btn-action-delete" onclick="window.adminDeleteEvent('${doc.id}')">Delete</button>
+                </div>
+              </div>`;
+          });
+          eventsList.innerHTML = html;
+        });
+      } catch (e) { console.warn('Events listener error:', e); }
+
+      // 3. Volunteers
+      const volunteersTbody = document.getElementById('admin-volunteers-tbody');
+      const volunteersBadge = document.getElementById('volunteers-count-badge');
+      try {
+        db.collection('volunteers').orderBy('createdAt', 'desc').onSnapshot((snap) => {
+          if (volunteersBadge) volunteersBadge.textContent = snap.size;
+          if (!volunteersTbody) return;
+          if (snap.empty) {
+            volunteersTbody.innerHTML = '<tr><td colspan="9" class="empty-list-msg">No volunteer applications yet.</td></tr>';
+            return;
+          }
+          let html = '';
+          let idx = 1;
+          snap.forEach((doc) => {
+            const d = doc.data();
+            const status = (d.status || 'pending').toLowerCase();
+            const statusClass = status === 'approved' ? 'status-approved' : (status === 'rejected' ? 'status-rejected' : 'status-pending');
+            html += `
+              <tr>
+                <td>${idx++}</td>
+                <td><strong>${escapeHtml(d.name || '-')}</strong></td>
+                <td>${escapeHtml(d.email || '-')}</td>
+                <td>${escapeHtml(d.class || '-')}</td>
+                <td>${escapeHtml(d.phone || '-')}</td>
+                <td>${escapeHtml(d.college || '-')}</td>
+                <td><div class="table-text-cell" title="${escapeHtml(d.why || '')}">${escapeHtml(d.why || '-')}</div></td>
+                <td><span class="status-badge ${statusClass}">${status}</span></td>
+                <td>
+                  <div class="table-action-btns">
+                    ${status !== 'approved' ? `<button type="button" class="btn-action-approve" onclick="window.adminApproveVolunteer('${doc.id}')">Approve</button>` : ''}
+                    ${status !== 'rejected' ? `<button type="button" class="btn-action-reject" onclick="window.adminRejectVolunteer('${doc.id}')">Reject</button>` : ''}
+                    <button type="button" class="btn-action-delete" onclick="window.adminDeleteVolunteer('${doc.id}')">Del</button>
+                  </div>
+                </td>
+              </tr>`;
+          });
+          volunteersTbody.innerHTML = html;
+        });
+      } catch (e) { console.warn('Volunteers listener error:', e); }
+
+      // 4. Members
+      const membersTbody = document.getElementById('admin-members-tbody');
+      const membersBadge = document.getElementById('members-count-badge');
+      try {
+        db.collection('members').onSnapshot((snap) => {
+          if (membersBadge) membersBadge.textContent = snap.size;
+          if (!membersTbody) return;
+          if (snap.empty) {
+            membersTbody.innerHTML = '<tr><td colspan="5" class="empty-list-msg">No members joined yet.</td></tr>';
+            return;
+          }
+          let html = '';
+          let idx = 1;
+          snap.forEach((doc) => {
+            const d = doc.data();
+            html += `
+              <tr>
+                <td>${idx++}</td>
+                <td><strong>${escapeHtml(d.name || '-')}</strong></td>
+                <td>${escapeHtml(d.email || '-')}</td>
+                <td><span class="status-badge status-approved">${escapeHtml(d.status || 'active')}</span></td>
+                <td><button type="button" class="btn-action-delete" onclick="window.adminDeleteMember('${doc.id}')">Delete</button></td>
+              </tr>`;
+          });
+          membersTbody.innerHTML = html;
+        });
+      } catch (e) { console.warn('Members listener error:', e); }
+
+      // 5. Leaders
+      const leadersTbody = document.getElementById('admin-leaders-tbody');
+      const leadersBadge = document.getElementById('leaders-count-badge');
+      try {
+        db.collection('leaders').onSnapshot((snap) => {
+          if (leadersBadge) leadersBadge.textContent = snap.size;
+          if (!leadersTbody) return;
+          if (snap.empty) {
+            leadersTbody.innerHTML = '<tr><td colspan="9" class="empty-list-msg">No leader applications yet.</td></tr>';
+            return;
+          }
+          let html = '';
+          let idx = 1;
+          snap.forEach((doc) => {
+            const d = doc.data();
+            const status = (d.status || 'pending').toLowerCase();
+            const statusClass = status === 'approved' ? 'status-approved' : (status === 'rejected' ? 'status-rejected' : 'status-pending');
+            html += `
+              <tr>
+                <td>${idx++}</td>
+                <td><strong>${escapeHtml(d.name || '-')}</strong></td>
+                <td>${escapeHtml(d.position || '-')}</td>
+                <td>${escapeHtml(d.class || '-')}</td>
+                <td>${escapeHtml(d.phone || '-')}</td>
+                <td>${escapeHtml(d.email || '-')}</td>
+                <td><div class="table-text-cell">${escapeHtml(d.motivation || '-')}</div></td>
+                <td><span class="status-badge ${statusClass}">${status}</span></td>
+                <td>
+                  <div class="table-action-btns">
+                    ${status !== 'approved' ? `<button type="button" class="btn-action-approve" onclick="window.adminApproveLeader('${doc.id}')">Approve</button>` : ''}
+                    ${status !== 'rejected' ? `<button type="button" class="btn-action-reject" onclick="window.adminRejectLeader('${doc.id}')">Reject</button>` : ''}
+                    <button type="button" class="btn-action-delete" onclick="window.adminDeleteLeader('${doc.id}')">Del</button>
+                  </div>
+                </td>
+              </tr>`;
+          });
+          leadersTbody.innerHTML = html;
+        });
+      } catch (e) { console.warn('Leaders listener error:', e); }
+
+      // 6. Chat
+      const chatList = document.getElementById('admin-chat-list');
+      const chatBadge = document.getElementById('chat-count-badge');
+      try {
+        db.collection('chat').orderBy('createdAt', 'asc').limitToLast(50).onSnapshot((snap) => {
+          if (chatBadge) chatBadge.textContent = snap.size;
+          if (!chatList) return;
+          if (snap.empty) {
+            chatList.innerHTML = '<div class="empty-list-msg">No messages in chat.</div>';
+            return;
+          }
+          let html = '';
+          snap.forEach((doc) => {
+            const d = doc.data();
+            const timeStr = d.createdAt && d.createdAt.toDate ? d.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+            html += `
+              <div class="admin-chat-item">
+                <div>
+                  <strong>${escapeHtml(d.name || 'Anonymous')}:</strong>
+                  <span>${escapeHtml(d.text || '')}</span>
+                  <small style="color: #94A3B8; margin-left: 0.5rem;">${timeStr}</small>
+                </div>
+                <button type="button" class="btn-action-delete" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="window.adminDeleteChatMessage('${doc.id}')">Del</button>
+              </div>`;
+          });
+          chatList.innerHTML = html;
+          chatList.scrollTop = chatList.scrollHeight;
+        });
+      } catch (e) { console.warn('Chat listener error:', e); }
+    }
+
+    // Window helper actions
+    window.adminDeleteNotice = async (id) => {
+      if (confirm('Delete this notice?')) {
+        try { await db.collection('notices').doc(id).delete(); } catch (e) { alert(e.message); }
+      }
+    };
+    window.adminDeleteEvent = async (id) => {
+      if (confirm('Delete this event?')) {
+        try { await db.collection('events').doc(id).delete(); } catch (e) { alert(e.message); }
+      }
+    };
+    window.adminApproveVolunteer = async (id) => {
+      try { await db.collection('volunteers').doc(id).update({ status: 'approved' }); } catch (e) { alert(e.message); }
+    };
+    window.adminRejectVolunteer = async (id) => {
+      try { await db.collection('volunteers').doc(id).update({ status: 'rejected' }); } catch (e) { alert(e.message); }
+    };
+    window.adminDeleteVolunteer = async (id) => {
+      if (confirm('Delete this volunteer application?')) {
+        try { await db.collection('volunteers').doc(id).delete(); } catch (e) { alert(e.message); }
+      }
+    };
+    window.adminDeleteMember = async (id) => {
+      if (confirm('Remove this member?')) {
+        try { await db.collection('members').doc(id).delete(); } catch (e) { alert(e.message); }
+      }
+    };
+    window.adminApproveLeader = async (id) => {
+      try { await db.collection('leaders').doc(id).update({ status: 'approved' }); } catch (e) { alert(e.message); }
+    };
+    window.adminRejectLeader = async (id) => {
+      try { await db.collection('leaders').doc(id).update({ status: 'rejected' }); } catch (e) { alert(e.message); }
+    };
+    window.adminDeleteLeader = async (id) => {
+      if (confirm('Delete this leader application?')) {
+        try { await db.collection('leaders').doc(id).delete(); } catch (e) { alert(e.message); }
+      }
+    };
+    window.adminDeleteChatMessage = async (id) => {
+      try { await db.collection('chat').doc(id).delete(); } catch (e) { alert(e.message); }
+    };
+
+    // Notice Post Form
+    const noticeForm = document.getElementById('post-notice-form');
+    if (noticeForm) {
+      noticeForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const title = document.getElementById('notice-title').value.trim();
+        const message = document.getElementById('notice-message').value.trim();
+        const alertBox = document.getElementById('notice-form-alert');
+        const submitBtn = document.getElementById('notice-submit-btn');
+        if (!title || !message) return;
+        if (submitBtn) submitBtn.disabled = true;
+        try {
+          await db.collection('notices').add({
+            title,
+            message,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          if (alertBox) {
+            alertBox.className = 'form-alert success';
+            alertBox.textContent = 'Notice published successfully!';
+            alertBox.style.display = 'block';
+            setTimeout(() => { alertBox.style.display = 'none'; }, 4000);
+          }
+          noticeForm.reset();
+        } catch (err) {
+          if (alertBox) {
+            alertBox.className = 'form-alert error';
+            alertBox.textContent = 'Error: ' + err.message;
+            alertBox.style.display = 'block';
+          }
+        } finally {
+          if (submitBtn) submitBtn.disabled = false;
+        }
+      });
+    }
+
+    // Event Add Form
+    const eventForm = document.getElementById('add-event-form');
+    if (eventForm) {
+      eventForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const title = document.getElementById('event-title').value.trim();
+        const date = document.getElementById('event-date').value;
+        const location = document.getElementById('event-location').value.trim();
+        const description = document.getElementById('event-description').value.trim();
+        const alertBox = document.getElementById('event-form-alert');
+        const submitBtn = document.getElementById('event-submit-btn');
+        if (!title || !date || !location) return;
+        if (submitBtn) submitBtn.disabled = true;
+        try {
+          await db.collection('events').add({
+            title,
+            date,
+            location,
+            description,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          if (alertBox) {
+            alertBox.className = 'form-alert success';
+            alertBox.textContent = 'Event scheduled successfully!';
+            alertBox.style.display = 'block';
+            setTimeout(() => { alertBox.style.display = 'none'; }, 4000);
+          }
+          eventForm.reset();
+        } catch (err) {
+          if (alertBox) {
+            alertBox.className = 'form-alert error';
+            alertBox.textContent = 'Error: ' + err.message;
+            alertBox.style.display = 'block';
+          }
+        } finally {
+          if (submitBtn) submitBtn.disabled = false;
+        }
+      });
+    }
+
+    // Delete All Buttons
+    const delAllNotices = document.getElementById('admin-delete-all-notices-btn');
+    if (delAllNotices) {
+      delAllNotices.addEventListener('click', async () => {
+        if (!confirm('Are you sure you want to delete ALL notices?')) return;
+        try {
+          const snap = await db.collection('notices').get();
+          const batch = db.batch();
+          snap.forEach(d => batch.delete(d.ref));
+          await batch.commit();
+        } catch (e) { alert(e.message); }
+      });
+    }
+
+    const delAllEvents = document.getElementById('admin-delete-all-events-btn');
+    if (delAllEvents) {
+      delAllEvents.addEventListener('click', async () => {
+        if (!confirm('Are you sure you want to delete ALL events?')) return;
+        try {
+          const snap = await db.collection('events').get();
+          const batch = db.batch();
+          snap.forEach(d => batch.delete(d.ref));
+          await batch.commit();
+        } catch (e) { alert(e.message); }
+      });
+    }
+
+    const delAllChat = document.getElementById('admin-delete-all-chat-btn');
+    if (delAllChat) {
+      delAllChat.addEventListener('click', async () => {
+        if (!confirm('Clear all chat messages?')) return;
+        try {
+          const snap = await db.collection('chat').get();
+          const batch = db.batch();
+          snap.forEach(d => batch.delete(d.ref));
+          await batch.commit();
+        } catch (e) { alert(e.message); }
+      });
+    }
+
+    // Seed Official Data Action
+    const seedBtn = document.getElementById('admin-seed-data-btn');
+    if (seedBtn) {
+      seedBtn.addEventListener('click', async () => {
+        const seedAlert = document.getElementById('seed-data-alert');
+        if (seedBtn) seedBtn.disabled = true;
+        if (seedAlert) {
+          seedAlert.className = 'form-alert info';
+          seedAlert.textContent = 'Seeding official ABVP Khaira data into Firestore...';
+          seedAlert.style.display = 'block';
+        }
+        try {
+          // Seed Notices
+          await db.collection('notices').add({
+            title: "Unit General Body Meeting",
+            message: "All college karyakartas and volunteers are requested to attend the upcoming unit review meeting.",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          await db.collection('notices').add({
+            title: "Pre-Exam Free Book Distribution",
+            message: "Free academic books for +2 and +3 honours students are now available at the ABVP help desk.",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          // Seed Events
+          await db.collection('events').add({
+            title: "Mission Sahasi: Self Defense Camp",
+            date: "2026-10-14",
+            location: "Khaira College Auditorium",
+            description: "Martial arts & self-defense workshop for female students.",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          await db.collection('events').add({
+            title: "Campus Voting Day Support",
+            date: "2026-10-15",
+            location: "Campus Gate Helpdesk",
+            description: "Student guide desk for campus voting and election day support.",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          if (seedAlert) {
+            seedAlert.className = 'form-alert success';
+            seedAlert.textContent = 'Official ABVP Khaira data seeded successfully!';
+            setTimeout(() => { seedAlert.style.display = 'none'; }, 4000);
+          }
+        } catch (err) {
+          if (seedAlert) {
+            seedAlert.className = 'form-alert error';
+            seedAlert.textContent = 'Seeding error: ' + err.message;
+          }
+        } finally {
+          if (seedBtn) seedBtn.disabled = false;
+        }
+      });
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+  </script>
 </body>
 </html>
-

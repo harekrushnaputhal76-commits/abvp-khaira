@@ -60,25 +60,32 @@
 .admin-user-info {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .admin-email-display {
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.75);
-  display: none;
+  font-size: 0.825rem;
+  color: #FFA534;
+  font-weight: 600;
+  display: inline-block;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 @media (min-width: 600px) {
   .admin-email-display {
-    display: inline-block;
+    max-width: none;
+    font-size: 0.875rem;
+    color: #FFFFFF;
   }
 }
 
 .btn-logout {
-  min-height: 40px;
-  padding: 0.4rem 1rem;
-  font-size: 0.875rem;
+  min-height: 38px;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.825rem;
   font-family: var(--font-heading);
   font-weight: 600;
   background: rgba(180, 35, 24, 0.12);
@@ -87,6 +94,7 @@
   border-radius: var(--radius-card);
   cursor: pointer;
   transition: background-color var(--transition-fast), color var(--transition-fast);
+  white-space: nowrap;
 }
 
 .btn-logout:hover {
@@ -97,7 +105,7 @@
 /* Main Container */
 .admin-main {
   flex: 1;
-  padding: 48px 1.25rem 64px;
+  padding: 32px 1rem 64px;
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
@@ -105,22 +113,47 @@
 
 /* 2. Login View Screen */
 .admin-login-view {
-  min-height: calc(100vh - 180px);
+  min-height: calc(100vh - 160px);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem 1rem;
+  padding: 1.5rem 0.75rem;
 }
 
 .login-card {
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: var(--radius-card);
-  padding: 2.5rem 1.75rem;
+  padding: 2.25rem 1.25rem;
   width: 100%;
-  max-width: 420px;
+  max-width: 440px;
   box-shadow: var(--shadow-soft);
   text-align: center;
+}
+
+.login-footer-note {
+  margin-top: 1.5rem;
+  padding: 0.85rem 0.85rem;
+  background: rgba(217, 115, 13, 0.08);
+  border: 1px solid rgba(217, 115, 13, 0.25);
+  border-radius: var(--radius-card);
+  font-size: 0.825rem;
+  color: var(--ink);
+  line-height: 1.5;
+  text-align: center;
+}
+
+.login-footer-note .admin-badge-email {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--maroon);
+  font-weight: 700;
+  font-size: 0.85rem;
+  word-break: break-all;
+  background: #FFFFFF;
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid var(--line);
 }
 
 .login-icon {
