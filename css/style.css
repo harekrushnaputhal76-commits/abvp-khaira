@@ -36,6 +36,7 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--nav-height) + 16px);
   font-size: 16px;
   overflow-x: hidden;
 }
@@ -88,11 +89,12 @@ p, li, span, input, select, textarea, button {
   left: 0;
   width: 100%;
   height: var(--nav-height);
-  background: rgba(15, 23, 42, 0.98);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
   z-index: 1000;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
 }
 
 .nav-container {
@@ -218,48 +220,96 @@ p, li, span, input, select, textarea, button {
   background: rgba(217, 115, 13, 0.08);
 }
 
-/* Hero Section */
+/* Hero Section (Apple-style immersive keynote presentation) */
 .hero {
   position: relative;
   min-height: calc(100vh - var(--nav-height));
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 48px 1.25rem;
+  padding: 56px 1.25rem 64px;
   text-align: center;
-  background: linear-gradient(180deg, #0F172A 0%, #162238 100%);
+  background: 
+    radial-gradient(circle at 50% 18%, rgba(217, 115, 13, 0.18) 0%, transparent 60%),
+    radial-gradient(circle at 85% 75%, rgba(47, 111, 98, 0.12) 0%, transparent 45%),
+    linear-gradient(180deg, #090E1A 0%, #0F172A 100%);
   overflow: hidden;
 }
 
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('../assets/rally.jpg');
+  background-size: cover;
+  background-position: center 30%;
+  opacity: 0.12;
+  mix-blend-mode: luminosity;
+  pointer-events: none;
+}
+
 .hero-content {
-  max-width: 720px;
+  max-width: 760px;
   margin: 0 auto;
   position: relative;
   z-index: 2;
 }
 
 .hero-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
   background: rgba(217, 115, 13, 0.12);
   border: 1px solid rgba(217, 115, 13, 0.35);
   color: var(--saffron);
-  padding: 0.35rem 1rem;
+  padding: 0.35rem 1.1rem;
   border-radius: var(--radius-badge);
   font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
+  backdrop-filter: blur(8px);
+}
+
+.live-pulse-dot {
+  width: 8px;
+  height: 8px;
+  background-color: var(--saffron);
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(217, 115, 13, 0.7);
+  animation: pulseLiveDot 2s infinite cubic-bezier(0.66, 0, 0, 1);
+}
+
+@keyframes pulseLiveDot {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(217, 115, 13, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 7px rgba(217, 115, 13, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(217, 115, 13, 0);
+  }
 }
 
 .hero-title {
   font-family: var(--font-heading);
-  font-size: clamp(2rem, 6vw, 3.25rem);
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  line-height: 1.2;
+  font-size: clamp(2.2rem, 6.5vw, 3.5rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
   color: #FFFFFF;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.hero-gradient-text {
+  background: linear-gradient(135deg, #FFB259 0%, #D9730D 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .hero-title::after {
@@ -269,18 +319,18 @@ p, li, span, input, select, textarea, button {
   height: 3px;
   background-color: var(--saffron);
   border-radius: 2px;
-  margin: 1.15rem auto 0;
+  margin: 1.25rem auto 0;
 }
 
 .hero-subtitle {
   font-family: var(--font-body);
-  font-size: clamp(1.05rem, 3.5vw, 1.25rem);
+  font-size: clamp(1rem, 3vw, 1.15rem);
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.78);
-  letter-spacing: 1.5px;
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 2px;
   text-transform: uppercase;
   margin-top: 1.25rem;
-  margin-bottom: 2.25rem;
+  margin-bottom: 2rem;
   line-height: 1.6;
 }
 
@@ -289,8 +339,65 @@ p, li, span, input, select, textarea, button {
   flex-direction: column;
   gap: 0.85rem;
   width: 100%;
-  max-width: 360px;
-  margin: 0 auto;
+  max-width: 420px;
+  margin: 0 auto 2.25rem auto;
+}
+
+@media (min-width: 600px) {
+  .hero-actions {
+    flex-direction: row;
+    justify-content: center;
+  }
+}
+
+.hero-btn-main {
+  background: linear-gradient(135deg, #E67A10 0%, #D9730D 100%);
+  box-shadow: 0 4px 16px rgba(217, 115, 13, 0.35);
+  flex: 1;
+}
+
+.hero-btn-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #FFFFFF;
+  backdrop-filter: blur(8px);
+  flex: 1;
+}
+
+.hero-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.hero-stats-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.hero-stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.85rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-badge);
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(6px);
+}
+
+.hero-stat-pill .stat-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--teal);
+}
+
+.hero-stat-pill.stat-pill-highlight .stat-dot-saffron {
+  background-color: var(--saffron);
 }
 
 /* Button styles (min-height 48px, radius 10px) */
