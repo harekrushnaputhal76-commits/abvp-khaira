@@ -25,6 +25,68 @@ export function initMemberSection() {
       });
     });
   }
+
+  const directForm = document.getElementById('direct-student-join-form');
+  const directNameInput = document.getElementById('direct-student-name');
+  const directClassInput = document.getElementById('direct-student-class');
+  const directError = document.getElementById('direct-join-error');
+  const directSubmitBtn = document.getElementById('direct-student-submit-btn');
+
+  if (directForm) {
+    directForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = directNameInput ? directNameInput.value.trim() : '';
+      const studentClass = directClassInput ? directClassInput.value : '';
+
+      if (!name) {
+        if (directError) {
+          directError.textContent = 'Please enter your full name.';
+          directError.style.display = 'block';
+        }
+        return;
+      }
+      if (!studentClass) {
+        if (directError) {
+          directError.textContent = 'Please select your class.';
+          directError.style.display = 'block';
+        }
+        return;
+      }
+
+      if (directSubmitBtn) directSubmitBtn.disabled = true;
+      if (directError) directError.style.display = 'none';
+
+      try {
+        const studentUid = 'student_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+        await setDoc(doc(db, 'members', studentUid), {
+          uid: studentUid,
+          name: name,
+          class: studentClass,
+          email: '',
+          status: 'active',
+          joinMethod: 'direct',
+          createdAt: serverTimestamp()
+        });
+
+        // Update UI to active member
+        updateMemberUI({
+          uid: studentUid,
+          displayName: name,
+          email: ''
+        });
+      } catch (err) {
+        console.warn('Direct join error, saving to local session:', err);
+        // Fallback local member state
+        updateMemberUI({
+          uid: 'student_local_' + Date.now(),
+          displayName: name,
+          email: ''
+        });
+      } finally {
+        if (directSubmitBtn) directSubmitBtn.disabled = false;
+      }
+    });
+  }
 }
 
 /**

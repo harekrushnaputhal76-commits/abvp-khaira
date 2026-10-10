@@ -77,6 +77,36 @@
           <a href="#join-abvp" class="btn btn-primary hero-btn-main">Join ABVP</a>
           <a href="#election" class="btn btn-secondary hero-btn-secondary">Election 15 Oct</a>
         </div>
+
+        <!-- Live Campus Election Countdown Bar (Prominent in Hero) -->
+        <div class="hero-countdown-box" id="hero-countdown">
+          <div class="hero-countdown-tag">
+            <span class="live-pulse-dot" aria-hidden="true"></span>
+            <span>ELECTION COUNTDOWN &bull; VOTING 15 OCT 2026</span>
+          </div>
+          <div class="hero-cd-units">
+            <div class="hero-cd-unit">
+              <span class="hero-cd-val" id="hero-cd-days">04</span>
+              <span class="hero-cd-label">Days</span>
+            </div>
+            <span class="hero-cd-divider">:</span>
+            <div class="hero-cd-unit">
+              <span class="hero-cd-val" id="hero-cd-hours">20</span>
+              <span class="hero-cd-label">Hours</span>
+            </div>
+            <span class="hero-cd-divider">:</span>
+            <div class="hero-cd-unit">
+              <span class="hero-cd-val" id="hero-cd-mins">32</span>
+              <span class="hero-cd-label">Mins</span>
+            </div>
+            <span class="hero-cd-divider">:</span>
+            <div class="hero-cd-unit">
+              <span class="hero-cd-val" id="hero-cd-secs">11</span>
+              <span class="hero-cd-label">Secs</span>
+            </div>
+          </div>
+        </div>
+
         <div class="hero-stats-row">
           <div class="hero-stat-pill">
             <span class="stat-dot"></span> Khaira College
@@ -522,6 +552,29 @@
               </svg>
               <span>Continue with Google</span>
             </button>
+
+            <div class="join-divider">
+              <span>or direct student join</span>
+            </div>
+
+            <!-- Direct Student Join Form -->
+            <form id="direct-student-join-form" class="direct-join-form" novalidate>
+              <div class="direct-form-row">
+                <input type="text" id="direct-student-name" class="form-input" placeholder="Your Full Name (e.g. Rahul Nayak)" maxlength="60" required>
+                <select id="direct-student-class" class="form-select" required>
+                  <option value="">Select Class</option>
+                  <option value="+2 1st Year">+2 1st Year</option>
+                  <option value="+2 2nd Year">+2 2nd Year</option>
+                  <option value="+3 1st Year">+3 1st Year</option>
+                  <option value="+3 2nd Year">+3 2nd Year</option>
+                  <option value="Other">Other</option>
+                </select>
+                <button type="submit" id="direct-student-submit-btn" class="btn btn-primary direct-btn">
+                  <span>Join Now</span>
+                </button>
+              </div>
+              <div id="direct-join-error" class="field-error" style="display: none; text-align: center; margin-top: 0.5rem;" aria-live="polite"></div>
+            </form>
           </div>
 
           <!-- State: Logged in (active membership status) -->

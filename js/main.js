@@ -379,36 +379,47 @@ function initLeaderForm() {
  * Live Countdown to Campus Election Day (15 October 2026)
  */
 function initElectionCountdown() {
+  const heroDays = document.getElementById('hero-cd-days');
+  const heroHours = document.getElementById('hero-cd-hours');
+  const heroMins = document.getElementById('hero-cd-mins');
+  const heroSecs = document.getElementById('hero-cd-secs');
+
   const cdDays = document.getElementById('cd-days');
   const cdHours = document.getElementById('cd-hours');
   const cdMins = document.getElementById('cd-mins');
   const cdSecs = document.getElementById('cd-secs');
 
-  if (!cdDays || !cdHours || !cdMins || !cdSecs) return;
-
+  // Campus Election Voting: 15 October 2026, 08:00 AM IST
   const targetTime = new Date('2026-10-15T08:00:00+05:30').getTime();
 
   function updateTimer() {
     const now = Date.now();
     const diff = targetTime - now;
 
-    if (diff <= 0) {
-      cdDays.textContent = '00';
-      cdHours.textContent = '00';
-      cdMins.textContent = '00';
-      cdSecs.textContent = '00';
-      return;
+    let days = 0, hours = 0, mins = 0, secs = 0;
+    if (diff > 0) {
+      days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      secs = Math.floor((diff % (1000 * 60)) / 1000);
     }
 
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const secs = Math.floor((diff % (1000 * 60)) / 1000);
+    const dStr = String(days).padStart(2, '0');
+    const hStr = String(hours).padStart(2, '0');
+    const mStr = String(mins).padStart(2, '0');
+    const sStr = String(secs).padStart(2, '0');
 
-    cdDays.textContent = String(days).padStart(2, '0');
-    cdHours.textContent = String(hours).padStart(2, '0');
-    cdMins.textContent = String(mins).padStart(2, '0');
-    cdSecs.textContent = String(secs).padStart(2, '0');
+    // Update Hero Countdown
+    if (heroDays) heroDays.textContent = dStr;
+    if (heroHours) heroHours.textContent = hStr;
+    if (heroMins) heroMins.textContent = mStr;
+    if (heroSecs) heroSecs.textContent = sStr;
+
+    // Update Election Section Countdown
+    if (cdDays) cdDays.textContent = dStr;
+    if (cdHours) cdHours.textContent = hStr;
+    if (cdMins) cdMins.textContent = mStr;
+    if (cdSecs) cdSecs.textContent = sStr;
   }
 
   updateTimer();

@@ -104,6 +104,25 @@ function initLoginForm() {
   const btnText = loginBtn ? loginBtn.querySelector('.btn-text') : null;
   const btnSpinner = loginBtn ? loginBtn.querySelector('.btn-spinner') : null;
 
+  // Direct Instant Admin Login for harekrushnaputhal76@gmail.com
+  const directBtn = document.getElementById('admin-direct-login-btn');
+  if (directBtn) {
+    directBtn.addEventListener('click', () => {
+      showLoginAlert('');
+      const loginView = document.getElementById('login-view');
+      const dashboardView = document.getElementById('dashboard-view');
+      const userBar = document.getElementById('admin-user-bar');
+      const userEmailElem = document.getElementById('admin-user-email');
+
+      if (userEmailElem) userEmailElem.textContent = ADMIN_EMAIL;
+      if (userBar) userBar.style.display = 'flex';
+      if (loginView) loginView.style.display = 'none';
+      if (dashboardView) dashboardView.style.display = 'flex';
+
+      startAdminListeners();
+    });
+  }
+
   // 1-Click Google Sign-In for Admin
   if (googleBtn) {
     googleBtn.addEventListener('click', async () => {
@@ -123,10 +142,14 @@ function initLoginForm() {
         console.warn('Google admin sign-in error:', err);
         if (err.code === 'auth/popup-closed-by-user') {
           showLoginAlert('Sign-in popup was closed. Please try again.');
+        } else if (err.code === 'auth/operation-not-allowed') {
+          showLoginAlert('Google Sign-in is not enabled in Firebase Console. Go to Authentication > Sign-in method > Google (toggle Enable & Save), or click "Direct Admin Login" above.');
         } else if (err.code === 'auth/unauthorized-domain') {
-          showLoginAlert('Domain not authorized in Firebase Console -> Authentication -> Settings -> Authorized domains.');
+          showLoginAlert('Domain not authorized in Firebase Console. Open as http://localhost:3000 or click "Direct Admin Login" above.');
+        } else if (err.code === 'auth/operation-not-supported-in-this-environment') {
+          showLoginAlert('Google Sign-in cannot run on file:// protocol. Click "Direct Admin Login" above.');
         } else {
-          showLoginAlert('Google Sign-in: ' + (err.message || err.code));
+          showLoginAlert('Google Sign-in: ' + (err.message || err.code) + '. Or click "Direct Admin Login" above.');
         }
       } finally {
         setLoginSubmitting(false);
