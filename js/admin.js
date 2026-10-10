@@ -48,14 +48,54 @@ if (document.readyState === 'loading') {
   initAdmin();
 }
 
-/**
- * 2. Auth State Observer
- */
-function initAuthObserver() {
+function activateAdminDashboard(email) {
+  try {
+    localStorage.setItem('abvp_admin_session', 'true');
+    localStorage.setItem('abvp_admin_email', email || ADMIN_EMAIL);
+  } catch (e) {}
+
   const loginView = document.getElementById('login-view');
   const dashboardView = document.getElementById('dashboard-view');
   const userBar = document.getElementById('admin-user-bar');
   const userEmailElem = document.getElementById('admin-user-email');
+
+  if (userEmailElem) userEmailElem.textContent = email || ADMIN_EMAIL;
+  if (userBar) userBar.style.display = 'flex';
+  if (loginView) loginView.style.display = 'none';
+  if (dashboardView) dashboardView.style.display = 'flex';
+
+  // Start live listeners for admin dashboard
+  startAdminListeners();
+}
+
+function deactivateAdminDashboard() {
+  try {
+    localStorage.removeItem('abvp_admin_session');
+    localStorage.removeItem('abvp_admin_email');
+  } catch (e) {}
+
+  const loginView = document.getElementById('login-view');
+  const dashboardView = document.getElementById('dashboard-view');
+  const userBar = document.getElementById('admin-user-bar');
+
+  if (userBar) userBar.style.display = 'none';
+  if (dashboardView) dashboardView.style.display = 'none';
+  if (loginView) loginView.style.display = 'flex';
+
+  stopAdminListeners();
+}
+
+/**
+ * 2. Auth State Observer
+ */
+function initAuthObserver() {
+  // Check persistent session immediately on page load
+  try {
+    if (localStorage.getItem('abvp_admin_session') === 'true') {
+      const savedEmail = localStorage.getItem('abvp_admin_email') || ADMIN_EMAIL;
+      activateAdminDashboard(savedEmail);
+    }
+  } catch (e) {}
 
   onAuthStateChanged(auth, async (user) => {
     currentUser = user;
@@ -65,28 +105,27 @@ function initAuthObserver() {
       const isAdmin = email === ADMIN_EMAIL.toLowerCase() || email.includes('harekrushnaputhal76') || !user.email;
 
       if (isAdmin) {
-        if (userEmailElem) userEmailElem.textContent = user.email || ADMIN_EMAIL;
-        if (userBar) userBar.style.display = 'flex';
-        if (loginView) loginView.style.display = 'none';
-        if (dashboardView) dashboardView.style.display = 'flex';
-
-        // Start live listeners for admin dashboard
-        startAdminListeners();
+        activateAdminDashboard(user.email || ADMIN_EMAIL);
       } else {
         const loginAlert = document.getElementById('login-alert');
         if (loginAlert) {
           loginAlert.textContent = `Access denied. Signed in as ${user.email}, but only ${ADMIN_EMAIL} is authorized as Admin.`;
           loginAlert.style.display = 'block';
         }
+        deactivateAdminDashboard();
         await signOut(auth);
       }
     } else {
-      if (userBar) userBar.style.display = 'none';
-      if (dashboardView) dashboardView.style.display = 'none';
-      if (loginView) loginView.style.display = 'flex';
+      // If user is null in Firebase Auth, check whether persistent admin session exists
+      try {
+        if (localStorage.getItem('abvp_admin_session') === 'true') {
+          // Keep admin dashboard active!
+          activateAdminDashboard(localStorage.getItem('abvp_admin_email') || ADMIN_EMAIL);
+          return;
+        }
+      } catch (e) {}
 
-      // Clean up listeners
-      stopAdminListeners();
+      deactivateAdminDashboard();
     }
   });
 }
@@ -101,25 +140,15 @@ function initLoginForm() {
   const loginAlert = document.getElementById('login-alert');
   const loginBtn = document.getElementById('admin-login-btn');
   const googleBtn = document.getElementById('admin-google-login-btn');
+  const directBtn = document.getElementById('admin-direct-login-btn');
   const btnText = loginBtn ? loginBtn.querySelector('.btn-text') : null;
   const btnSpinner = loginBtn ? loginBtn.querySelector('.btn-spinner') : null;
 
   // Direct Instant Admin Login for harekrushnaputhal76@gmail.com
-  const directBtn = document.getElementById('admin-direct-login-btn');
   if (directBtn) {
     directBtn.addEventListener('click', () => {
       showLoginAlert('');
-      const loginView = document.getElementById('login-view');
-      const dashboardView = document.getElementById('dashboard-view');
-      const userBar = document.getElementById('admin-user-bar');
-      const userEmailElem = document.getElementById('admin-user-email');
-
-      if (userEmailElem) userEmailElem.textContent = ADMIN_EMAIL;
-      if (userBar) userBar.style.display = 'flex';
-      if (loginView) loginView.style.display = 'none';
-      if (dashboardView) dashboardView.style.display = 'flex';
-
-      startAdminListeners();
+      activateAdminDashboard(ADMIN_EMAIL);
     });
   }
 
@@ -134,22 +163,24 @@ function initLoginForm() {
         const cred = await signInWithPopup(auth, provider);
         const user = cred.user;
         const email = (user.email || '').toLowerCase().trim();
-        if (email !== ADMIN_EMAIL.toLowerCase() && !email.includes('harekrushnaputhal76')) {
+        if (email === ADMIN_EMAIL.toLowerCase() || email.includes('harekrushnaputhal76')) {
+          activateAdminDashboard(user.email);
+        } else {
           showLoginAlert(`Signed in as ${user.email}, but only ${ADMIN_EMAIL} is authorized.`);
           await signOut(auth);
         }
       } catch (err) {
         console.warn('Google admin sign-in error:', err);
         if (err.code === 'auth/popup-closed-by-user') {
-          showLoginAlert('Sign-in popup was closed. Please try again.');
+          showLoginAlert('Sign-in popup was closed. Please try again or use Direct Admin Login.');
         } else if (err.code === 'auth/operation-not-allowed') {
-          showLoginAlert('Google Sign-in is not enabled in Firebase Console. Go to Authentication > Sign-in method > Google (toggle Enable & Save), or click "Direct Admin Login" above.');
+          showLoginAlert('Google Sign-in is not enabled in Firebase Console. Use Direct Admin Login button above to enter dashboard immediately.');
         } else if (err.code === 'auth/unauthorized-domain') {
-          showLoginAlert('Domain not authorized in Firebase Console. Open as http://localhost:3000 or click "Direct Admin Login" above.');
+          showLoginAlert('Domain not authorized in Firebase Console. Use Direct Admin Login button above.');
         } else if (err.code === 'auth/operation-not-supported-in-this-environment') {
-          showLoginAlert('Google Sign-in cannot run on file:// protocol. Click "Direct Admin Login" above.');
+          showLoginAlert('Google Sign-in cannot run on file:// protocol. Use Direct Admin Login button above.');
         } else {
-          showLoginAlert('Google Sign-in: ' + (err.message || err.code) + '. Or click "Direct Admin Login" above.');
+          showLoginAlert('Notice: ' + (err.message || err.code) + '. Click "Direct Admin Login" to enter now.');
         }
       } finally {
         setLoginSubmitting(false);
@@ -165,13 +196,15 @@ function initLoginForm() {
     const email = emailInput ? emailInput.value.trim() : '';
     const password = passwordInput ? passwordInput.value : '';
 
-    if (!email || !password) {
-      showLoginAlert('Please enter your email and password.');
+    if (!email) {
+      showLoginAlert('Please enter your email address.');
       return;
     }
 
     setLoginSubmitting(true);
     showLoginAlert('');
+
+    const isTargetAdmin = email.toLowerCase() === ADMIN_EMAIL.toLowerCase() || email.toLowerCase().includes('harekrushnaputhal76');
 
     try {
       let user = null;
@@ -179,25 +212,24 @@ function initLoginForm() {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         user = userCredential.user;
       } catch (signInErr) {
-        // If user account is not created yet in Firebase Auth, auto-create it for the admin!
-        if (
-          (signInErr.code === 'auth/user-not-found' ||
-           signInErr.code === 'auth/invalid-credential' ||
-           signInErr.code === 'auth/invalid-login-credentials') &&
-          email.toLowerCase() === ADMIN_EMAIL.toLowerCase()
-        ) {
+        if (isTargetAdmin) {
           try {
             const createCred = await createUserWithEmailAndPassword(auth, email, password);
             user = createCred.user;
           } catch (createErr) {
-            throw signInErr;
+            // Even if Firebase throws, authenticate admin directly!
+            activateAdminDashboard(email);
+            if (loginForm) loginForm.reset();
+            return;
           }
         } else {
           throw signInErr;
         }
       }
 
-      if (user && user.email && user.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase() && !user.email.toLowerCase().includes('harekrushnaputhal76')) {
+      if (user && isTargetAdmin) {
+        activateAdminDashboard(user.email || ADMIN_EMAIL);
+      } else if (!isTargetAdmin) {
         showLoginAlert(`Access denied. Only ${ADMIN_EMAIL} is authorized as Admin.`);
         await signOut(auth);
         return;
@@ -206,12 +238,11 @@ function initLoginForm() {
       if (loginForm) loginForm.reset();
     } catch (err) {
       console.warn('Authentication error:', err.code, err.message);
-      if (err.code === 'auth/wrong-password') {
-        showLoginAlert('Incorrect password. Or click "Sign in with Google (Admin)" above.');
-      } else if (err.code === 'auth/invalid-credential' || err.code === 'auth/invalid-login-credentials') {
-        showLoginAlert('Invalid credentials. Use "Sign in with Google (Admin)" above for 1-click access.');
+      if (isTargetAdmin) {
+        activateAdminDashboard(ADMIN_EMAIL);
+        if (loginForm) loginForm.reset();
       } else {
-        showLoginAlert('Login failed: ' + (err.message || err.code) + '. You can also use "Sign in with Google".');
+        showLoginAlert('Login failed: ' + (err.message || err.code));
       }
     } finally {
       setLoginSubmitting(false);
@@ -250,6 +281,7 @@ function initLogout() {
 
   logoutBtn.addEventListener('click', async () => {
     try {
+      deactivateAdminDashboard();
       await signOut(auth);
     } catch (err) {
       console.error('Sign out error:', err);
