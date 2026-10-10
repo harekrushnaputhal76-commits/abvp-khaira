@@ -131,29 +131,19 @@
   text-align: center;
 }
 
-.login-footer-note {
+.login-secure-notice {
   margin-top: 1.5rem;
-  padding: 0.85rem 0.85rem;
-  background: rgba(217, 115, 13, 0.08);
-  border: 1px solid rgba(217, 115, 13, 0.25);
-  border-radius: var(--radius-card);
   font-size: 0.825rem;
-  color: var(--ink);
-  line-height: 1.5;
-  text-align: center;
+  color: var(--ink-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
 }
 
-.login-footer-note .admin-badge-email {
-  display: block;
-  margin-top: 0.35rem;
-  color: var(--maroon);
-  font-weight: 700;
-  font-size: 0.85rem;
-  word-break: break-all;
-  background: #FFFFFF;
-  padding: 0.35rem 0.6rem;
-  border-radius: 6px;
-  border: 1px solid var(--line);
+.login-secure-notice svg {
+  color: var(--saffron);
+  flex-shrink: 0;
 }
 
 .login-icon {
