@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    if (window.location.hostname === '127.0.0.1') {
+      window.location.hostname = 'localhost';
+    }
+  </script>
+  <title>Admin Dashboard | ABVP Khaira College Unit</title>
+  <link rel="stylesheet" href="css/admin.css">
+  <script type="module" src="js/admin.js"></script>
+</head>
+<body class="admin-body">
+
+  <!-- Admin Navigation Bar -->
+  <header class="admin-navbar">
+    <div class="admin-nav-container">
+      <div class="admin-brand">
+        <a href="index.html" class="brand-text" title="View Public Website">
+          ABVP <span class="brand-accent">Khaira</span>
+        </a>
+        <span class="admin-badge">Admin</span>
+      </div>
+
+      <div class="admin-user-info" id="admin-user-bar" style="display: none;">
+        <span class="admin-email-display" id="admin-user-email"></span>
+        <button type="button" id="admin-logout-btn" class="btn-logout" aria-label="Sign out of admin dashboard">
+          Logout
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="admin-main">
+
+    <!-- 2. Login Screen (Default view when unauthenticated) -->
+    <section class="admin-login-view" id="login-view">
+      <div class="login-card">
+        <div class="login-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+        </div>
+        <h1 class="login-title">Karyakarta Login</h1>
+        <p class="login-sub">Authorized unit administrators only</p>
+
+        <div id="login-alert" class="form-alert error" role="alert" style="display: none;"></div>
+
+        <form id="admin-login-form" class="login-form" novalidate>
+          <div class="form-group">
+            <label for="admin-email" class="form-label">Email Address <span class="required-star">*</span></label>
+            <input type="email" id="admin-email" class="form-input" placeholder="admin@khaira.org" autocomplete="email" required>
+          </div>
+
+          <div class="form-group">
+            <label for="admin-password" class="form-label">Password <span class="required-star">*</span></label>
+            <input type="password" id="admin-password" class="form-input" placeholder="••••••••" autocomplete="current-password" required>
+          </div>
+
+          <button type="submit" id="admin-login-btn" class="btn btn-primary btn-submit">
+            <span class="btn-text">Login</span>
+            <span class="btn-spinner" style="display: none;" aria-hidden="true"></span>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- 4. Dashboard View (Only visible after verified authentication) -->
+    <section class="admin-dashboard-view" id="dashboard-view" style="display: none;">
+      <div class="dashboard-header">
+        <h1 class="dashboard-title">Unit Management Console</h1>
+        <p class="dashboard-sub">Khaira College Unit &bull; Notices, Events &amp; Volunteers</p>
+      </div>
+
+      <div class="dashboard-grid">
+
+        <!-- 1. Post a Notice -->
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <h2 class="admin-card-title">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="12" y1="18" x2="12" y2="12"></line>
+                <line x1="9" y1="15" x2="15" y2="15"></line>
+              </svg>
+              Post a Notice
+            </h2>
+          </div>
+
+          <div id="notice-form-alert" class="form-alert" role="alert" style="display: none;"></div>
+
+          <form id="post-notice-form" novalidate>
+            <div class="form-group">
+              <label for="notice-title" class="form-label">Title <span class="required-star">*</span> (Max 100)</label>
+              <input type="text" id="notice-title" class="form-input" maxlength="100" placeholder="e.g. Campus Unit Meeting on Saturday" required>
+            </div>
+
+            <div class="form-group">
+              <label for="notice-message" class="form-label">Message <span class="required-star">*</span> (Max 500)</label>
+              <textarea id="notice-message" class="form-textarea" rows="4" maxlength="500" placeholder="Notice details, agenda and time..." required></textarea>
+            </div>
+
+            <button type="submit" id="notice-submit-btn" class="btn btn-primary btn-submit">
+              <span class="btn-text">Publish Notice</span>
+              <span class="btn-spinner" style="display: none;" aria-hidden="true"></span>
+            </button>
+          </form>
+        </div>
+
+        <!-- 2. Current Notices -->
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <h2 class="admin-card-title">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+              Current Notices
+            </h2>
+            <div class="card-header-actions">
+              <span class="card-count-badge" id="notices-count-badge">0</span>
+              <button type="button" id="admin-delete-all-notices-btn" class="btn-delete-all" title="Delete all published notices">Delete All</button>
+            </div>
+          </div>
+
+          <div id="admin-notices-list" class="admin-list" aria-live="polite">
+            <div class="empty-list-msg">Loading notices...</div>
+          </div>
+        </div>
+
+        <!-- 3. Add Event -->
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <h2 class="admin-card-title">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+                <line x1="12" y1="14" x2="12" y2="18"></line>
+                <line x1="10" y1="16" x2="14" y2="16"></line>
+              </svg>
+              Add Event
+            </h2>
+          </div>
+
+          <div id="event-form-alert" class="form-alert" role="alert" style="display: none;"></div>
+
+          <form id="add-event-form" novalidate>
+            <div class="form-group">
+              <label for="event-title" class="form-label">Event Title <span class="required-star">*</span></label>
+              <input type="text" id="event-title" class="form-input" maxlength="120" placeholder="e.g. Mission Sahasi Self-Defense Training" required>
+            </div>
+
+            <div class="form-group">
+              <label for="event-date" class="form-label">Date <span class="required-star">*</span> (YYYY-MM-DD)</label>
+              <input type="date" id="event-date" class="form-input" required>
+            </div>
+
+            <div class="form-group">
+              <label for="event-location" class="form-label">Location <span class="required-star">*</span></label>
+              <input type="text" id="event-location" class="form-input" maxlength="120" placeholder="e.g. Khaira College Auditorium" required>
+            </div>
+
+            <div class="form-group">
+              <label for="event-description" class="form-label">Description <span class="required-star">*</span></label>
+              <textarea id="event-description" class="form-textarea" rows="3" maxlength="400" placeholder="Brief event summary and schedule..." required></textarea>
+            </div>
+
+            <button type="submit" id="event-submit-btn" class="btn btn-primary btn-submit">
+              <span class="btn-text">Add Event</span>
+              <span class="btn-spinner" style="display: none;" aria-hidden="true"></span>
+            </button>
+          </form>
+        </div>
+
+        <!-- 4. Current Events -->
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <h2 class="admin-card-title">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              Current Events
+            </h2>
+            <div class="card-header-actions">
+              <span class="card-count-badge" id="events-count-badge">0</span>
+              <button type="button" id="admin-delete-all-events-btn" class="btn-delete-all" title="Delete all scheduled events">Delete All</button>
+            </div>
+          </div>
+
+          <div id="admin-events-list" class="admin-list" aria-live="polite">
+            <div class="empty-list-msg">Loading events...</div>
+          </div>
+        </div>
+
+        <!-- 5. Volunteer Applications & Approvals -->
+        <div class="admin-card volunteers-full-section">
+          <div class="admin-card-header">
+            <h2 class="admin-card-title">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+              Volunteer Applications
+            </h2>
+            <span class="card-count-badge" id="volunteers-count-badge">0</span>
+          </div>
+
+          <div class="volunteers-table-wrapper">
+            <table class="volunteers-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Class</th>
+                  <th>Phone</th>
+                  <th>College</th>
+                  <th>Why Volunteer</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="admin-volunteers-tbody">
+                <tr>
+                  <td colspan="9" class="empty-list-msg">Loading volunteer applications...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 6. Registered Members -->
+        <div class="admin-card members-full-section">
+          <div class="admin-card-header">
+            <h2 class="admin-card-title">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <polyline points="16 11 18 13 22 9"></polyline>
+              </svg>
+              Registered Student Members
+            </h2>
+            <span class="card-count-badge" id="members-count-badge">0</span>
+          </div>
+
+          <div class="volunteers-table-wrapper">
+            <table class="volunteers-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="admin-members-tbody">
+                <tr>
+                  <td colspan="5" class="empty-list-msg">Loading members...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 7. Leader & Karyakarta Applications -->
+        <div class="admin-card leaders-full-section">
+          <div class="admin-card-header">
+            <h2 class="admin-card-title">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+              </svg>
+              Leader &amp; Karyakarta Applications
+            </h2>
+            <span class="card-count-badge" id="leaders-count-badge">0</span>
+          </div>
+
+          <div class="volunteers-table-wrapper">
+            <table class="volunteers-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Position</th>
+                  <th>Class</th>
+                  <th>Phone</th>
+                  <th>Email</th>
+                  <th>Motivation</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="admin-leaders-tbody">
+                <tr>
+                  <td colspan="9" class="empty-list-msg">Loading leader applications...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 8. Volunteer Chat Moderation -->
+        <div class="admin-card chat-full-section">
+          <div class="admin-card-header">
+            <h2 class="admin-card-title">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+              Volunteer Chat Moderation (Last 50 Messages)
+            </h2>
+            <div class="card-header-actions">
+              <span class="card-count-badge" id="chat-count-badge">0</span>
+              <button type="button" id="admin-delete-all-chat-btn" class="btn-delete-all" title="Clear all chat messages">Clear Chat</button>
+            </div>
+          </div>
+
+          <div id="admin-chat-list" class="admin-list" aria-live="polite">
+            <div class="empty-list-msg">Loading chat messages...</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+</body>
+</html>
+

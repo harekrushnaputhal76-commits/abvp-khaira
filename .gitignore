@@ -1,0 +1,8 @@
+# Local backups and temporary scratch scripts
+_backup_final/
+scratch/
+.system_generated/
+*.log
+check_*.js
+verify_*.js
+test_*.js

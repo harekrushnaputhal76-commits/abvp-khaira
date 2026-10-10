@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    if (window.location.hostname === '127.0.0.1') {
+      window.location.hostname = 'localhost';
+    }
+  </script>
+  <meta name="description" content="Akhil Bharatiya Vidyarthi Parishad (ABVP) - Khaira College Unit. Gyan, Sheel, Ekta. Students' Power, Nation's Power.">
+  <title>ABVP - Khaira College Unit | Students' Power, Nation's Power</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" onerror="if(!window.QRCode){const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js';document.head.appendChild(s);}"></script>
+  <script type="module" src="js/main.js"></script>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="#" class="nav-brand" aria-label="ABVP Khaira Home">
+        <img src="assets/logo.png" alt="ABVP Logo" class="nav-logo" onerror="this.style.display='none'">
+        <span class="brand-text">ABVP <span class="brand-accent">Khaira</span></span>
+      </a>
+
+      <div class="nav-actions-right">
+        <!-- Join ABVP primary button in navbar -->
+        <a href="#join-abvp" class="btn btn-primary nav-join-btn" id="nav-join-btn">Join ABVP</a>
+
+        <!-- Logged-in user bar -->
+        <div class="nav-user-bar" id="nav-user-bar" style="display: none;">
+          <span class="nav-user-name" id="nav-user-name"></span>
+          <button type="button" class="btn-nav-logout" id="nav-logout-btn" aria-label="Sign out">Logout</button>
+        </div>
+
+        <!-- Three-dot Menu (⋮) -->
+        <div class="nav-dropdown-wrapper">
+          <button type="button" class="more-dots-btn" id="more-dots-btn" aria-label="More options" aria-haspopup="true" aria-expanded="false">&#8942;</button>
+          <div class="more-dropdown-menu" id="more-dropdown-menu" style="display: none;">
+            <button type="button" class="dropdown-item-btn" id="open-volunteer-apply-btn">Volunteer Application</button>
+          </div>
+        </div>
+
+        <button class="hamburger-btn" aria-label="Toggle navigation menu" aria-expanded="false">
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+        </button>
+      </div>
+
+      <ul class="nav-links">
+        <li class="nav-item"><a href="#" class="nav-link">Home</a></li>
+        <li class="nav-item"><a href="#about" class="nav-link">About</a></li>
+        <li class="nav-item"><a href="#notices" class="nav-link">Notices</a></li>
+        <li class="nav-item"><a href="#events" class="nav-link">Events</a></li>
+        <li class="nav-item"><a href="#gallery" class="nav-link">Gallery</a></li>
+        <li class="nav-item"><a href="#contact" class="nav-link">Contact</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main>
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+      <div class="hero-content">
+        <span class="hero-badge">Khaira College Unit</span>
+        <h1 class="hero-title">Students' Power, Nation's Power</h1>
+        <p class="hero-subtitle">Gyan, Sheel, Ekta</p>
+        <div class="hero-actions">
+          <a href="#join-abvp" class="btn btn-primary">Join ABVP</a>
+          <a href="#notices" class="btn btn-secondary">Latest Notices</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- 1. Promo Ticker (Below Hero) -->
+    <div class="promo-ticker" id="promo-ticker" role="region" aria-label="Announcements Ticker" tabindex="0">
+      <div class="ticker-track">
+        <div class="ticker-content">
+          Khaira College Student Election on 15 Oct: Support &amp; Vote for ABVP! &bull; President &amp; Secretary &bull; Students' Power, Nation's Power &bull; Gyan, Sheel, Ekta &bull; Join ABVP Khaira &bull;&nbsp;
+        </div>
+        <div class="ticker-content" aria-hidden="true">
+          Khaira College Student Election on 15 Oct: Support &amp; Vote for ABVP! &bull; President &amp; Secretary &bull; Students' Power, Nation's Power &bull; Gyan, Sheel, Ekta &bull; Join ABVP Khaira &bull;&nbsp;
+        </div>
+      </div>
+    </div>
+
+    <!-- 1B. Campus Election 2026 Support Section (id="election") -->
+    <section class="election-section" id="election">
+      <div class="election-container">
+        <div class="section-header text-center">
+          <span class="section-badge saffron-badge pulse-badge">Voting on 15 October 2026</span>
+          <h2 class="election-heading">Support &amp; Vote for <span class="highlight-saffron">ABVP Khaira</span></h2>
+          <p class="election-subline">Khaira College Student Union Election &bull; President &amp; Secretary &bull; Together for a Better Campus</p>
+        </div>
+
+        <div class="election-grid">
+          <!-- Official Campaign Poster -->
+          <div class="election-card election-poster-card tilt-card" tabindex="0">
+            <div class="election-image-wrapper">
+              <img src="assets/election-poster.jpg" alt="Official Vote for ABVP Campaign Poster - President and Secretary - 15 October 2026" class="election-poster-img" loading="lazy">
+            </div>
+          </div>
+
+          <!-- Campaign Appeal & Commitment -->
+          <div class="election-card election-appeal-card">
+            <div class="appeal-badge">Together for a Better Campus</div>
+            <h3 class="appeal-title">Struggle &bull; Service &bull; Leadership</h3>
+            <blockquote class="appeal-quote">
+              &ldquo;ମୁଁ ପ୍ରାର୍ଥୀ ନୁହେଁ, ମୁଁ ଜଣେ ସଂଘର୍ଷୀ କାର୍ଯ୍ୟକର୍ତ୍ତା! ନିଜ ସ୍ୱାର୍ଥ ପାଇଁ ନୁହେଁ, ସଂଗଠନର ସମ୍ମାନ ପାଇଁ ଲଢୁଛି।&rdquo;
+            </blockquote>
+            <p class="appeal-desc">
+              On <strong>15th October 2026</strong>, cast your valuable vote for ABVP candidates for <strong>President</strong> and <strong>Secretary</strong>. Stand with the nationalist student movement fighting relentlessly for student welfare, laboratory upgrades, library resources, fee transparency, and women empowerment at Khaira College.
+            </p>
+            <div class="election-highlights">
+              <div class="highlight-pill"><span class="pill-dot"></span> 15 Oct Voting Day</div>
+              <div class="highlight-pill"><span class="pill-dot"></span> Vote for President</div>
+              <div class="highlight-pill"><span class="pill-dot"></span> Vote for Secretary</div>
+              <div class="highlight-pill"><span class="pill-dot"></span> Free Education Aid</div>
+              <div class="highlight-pill"><span class="pill-dot"></span> Mission Sahasi</div>
+            </div>
+            <div class="appeal-actions">
+              <a href="#join-abvp" class="btn btn-primary">Join Volunteer Team</a>
+              <a href="#gallery" class="btn btn-secondary">View Campus Rally</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- About Section (id="about") -->
+    <section class="section-placeholder" id="about">
+      <div class="section-header text-center">
+        <span class="section-badge saffron-badge">Campus Movement</span>
+        <h2 class="section-title">About <span class="highlight-saffron">ABVP Khaira</span></h2>
+        <p class="section-subline">Dedicated to nation-building, student welfare, character development, and academic excellence at Khaira College.</p>
+      </div>
+    </section>
+
+    <!-- 2. Leader Section (id="leaders", placed after About) -->
+    <section class="leaders-section" id="leaders">
+      <div class="leaders-container">
+        <div class="section-header text-center">
+          <span class="section-badge">Student Leadership</span>
+          <h2 class="leaders-title">Lead Karyakarta. <span class="highlight-saffron">Build Khaira.</span></h2>
+          <p class="leaders-subline">Struggle. Service. Leadership.</p>
+        </div>
+
+        <!-- Three Highlight Cards (Stacked on mobile, row on tablet/desktop) -->
+        <div class="highlight-cards-grid">
+          <!-- Card 1: Struggle -->
+          <div class="highlight-card tilt-card" tabindex="0">
+            <div class="card-icon-wrapper saffron-glow">
+              <svg class="card-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path>
+              </svg>
+            </div>
+            <h3 class="card-title">Struggle</h3>
+            <p class="card-desc">Standing fearlessly for student rights, campus reforms, and national self-respect.</p>
+          </div>
+
+          <!-- Card 2: Service -->
+          <div class="highlight-card tilt-card" tabindex="0">
+            <div class="card-icon-wrapper teal-glow">
+              <svg class="card-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>
+              </svg>
+            </div>
+            <h3 class="card-title">Service</h3>
+            <p class="card-desc">Uplifting fellow students and society through educational aid and active community seva.</p>
+          </div>
+
+          <!-- Card 3: Leadership -->
+          <div class="highlight-card tilt-card" tabindex="0">
+            <div class="card-icon-wrapper saffron-glow">
+              <svg class="card-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+              </svg>
+            </div>
+            <h3 class="card-title">Leadership</h3>
+            <p class="card-desc">Fostering visionary karyakartas driven by character, discipline, and patriotic zeal.</p>
+          </div>
+        </div>
+
+        <!-- Scroll CTA Button -->
+        <div class="leader-cta-center">
+          <a href="#leader-form-container" class="btn btn-primary leader-scroll-btn">
+            Join as Leader
+            <svg class="btn-arrow" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <polyline points="19 12 12 19 5 12"></polyline>
+            </svg>
+          </a>
+        </div>
+
+        <!-- 3. Leader Application Form Container -->
+        <div class="leader-form-card" id="leader-form-container">
+          <div class="form-header">
+            <h3 class="form-heading">Leader &amp; Karyakarta Application</h3>
+            <p class="form-subtext">Step forward to shape student welfare and lead initiatives at Khaira College.</p>
+          </div>
+
+          <!-- Form Status Feedback Messages -->
+          <div id="leader-form-alert" class="form-alert" role="alert" style="display: none;"></div>
+
+          <form id="leader-form" novalidate>
+            <!-- Full Name -->
+            <div class="form-group">
+              <label for="leader-name" class="form-label">Full Name <span class="required-star">*</span></label>
+              <input type="text" id="leader-name" name="fullName" class="form-input" maxlength="60" placeholder="e.g. Ramesh Chandra Behera" autocomplete="name" required>
+              <div class="field-error" id="error-leader-name" aria-live="polite"></div>
+            </div>
+
+            <!-- Father's Name -->
+            <div class="form-group">
+              <label for="leader-father" class="form-label">Father's Name <span class="optional-tag">(Optional)</span></label>
+              <input type="text" id="leader-father" name="fatherName" class="form-input" maxlength="60" placeholder="e.g. Prakash Behera" autocomplete="off">
+              <div class="field-error" id="error-leader-father" aria-live="polite"></div>
+            </div>
+
+            <!-- Class / Year -->
+            <div class="form-group">
+              <label for="leader-class" class="form-label">Class <span class="required-star">*</span></label>
+              <select id="leader-class" name="class" class="form-select" required>
+                <option value="">-- Select Your Class --</option>
+                <option value="+2 1st Year">+2 1st Year</option>
+                <option value="+2 2nd Year">+2 2nd Year</option>
+                <option value="+3 1st Year">+3 1st Year</option>
+                <option value="+3 2nd Year">+3 2nd Year</option>
+                <option value="Other">Other</option>
+              </select>
+              <div class="field-error" id="error-leader-class" aria-live="polite"></div>
+            </div>
+
+            <!-- Phone Number -->
+            <div class="form-group">
+              <label for="leader-phone" class="form-label">Phone Number <span class="required-star">*</span></label>
+              <input type="tel" id="leader-phone" name="phone" class="form-input" maxlength="10" placeholder="10-digit mobile number (e.g. 9876543210)" inputmode="numeric" required>
+              <div class="field-error" id="error-leader-phone" aria-live="polite"></div>
+            </div>
+
+            <!-- Email Address -->
+            <div class="form-group">
+              <label for="leader-email" class="form-label">Email Address <span class="optional-tag">(Optional)</span></label>
+              <input type="email" id="leader-email" name="email" class="form-input" placeholder="e.g. karyakarta@example.com" autocomplete="email">
+              <div class="field-error" id="error-leader-email" aria-live="polite"></div>
+            </div>
+
+            <!-- Position -->
+            <div class="form-group">
+              <label for="leader-position" class="form-label">Position of Interest <span class="required-star">*</span></label>
+              <select id="leader-position" name="position" class="form-select" required>
+                <option value="">-- Select Position --</option>
+                <option value="Karyakarta">Karyakarta</option>
+                <option value="Team Lead">Team Lead</option>
+                <option value="Event Coordinator">Event Coordinator</option>
+                <option value="Social Media">Social Media</option>
+                <option value="Tech/Web Team">Tech/Web Team</option>
+              </select>
+              <div class="field-error" id="error-leader-position" aria-live="polite"></div>
+            </div>
+
+            <!-- Why do you want to join? -->
+            <div class="form-group">
+              <div class="label-with-counter">
+                <label for="leader-why" class="form-label">Why do you want to join? <span class="required-star">*</span></label>
+                <span class="char-counter" id="why-counter">0 / 300</span>
+              </div>
+              <textarea id="leader-why" name="whyJoin" class="form-textarea" maxlength="300" rows="4" placeholder="Briefly explain your motivation and how you wish to contribute to the student community..." required></textarea>
+              <div class="field-error" id="error-leader-why" aria-live="polite"></div>
+            </div>
+
+            <!-- Code of Conduct Checkbox -->
+            <div class="form-group checkbox-group">
+              <label class="checkbox-label" for="leader-agree">
+                <input type="checkbox" id="leader-agree" name="agreedCode" class="form-checkbox" required>
+                <span class="custom-checkbox"></span>
+                <span class="checkbox-text">I agree to the organisation's code of conduct <span class="required-star">*</span></span>
+              </label>
+              <div class="field-error" id="error-leader-agree" aria-live="polite"></div>
+            </div>
+
+            <!-- Submit Button (min 44px height) -->
+            <button type="submit" id="leader-submit-btn" class="btn btn-primary btn-submit">
+              <span class="btn-text">Submit Leadership Application</span>
+              <span class="btn-spinner" style="display: none;" aria-hidden="true"></span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- Notices Section (id="notices") -->
+    <section class="notices-section" id="notices">
+      <div class="notices-container">
+        <div class="section-header text-center">
+          <span class="section-badge saffron-badge">Official Circulars</span>
+          <h2 class="notices-heading">Latest <span class="highlight-saffron">Notices</span></h2>
+          <p class="notices-subline">Real-time announcements, circulars &amp; karyakarta notifications.</p>
+        </div>
+
+        <div id="notices-list" class="notices-grid" aria-live="polite">
+          <div class="notices-loading">
+            <span class="btn-spinner" aria-hidden="true"></span>
+            <p>Loading notices...</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Events Section (id="events") -->
+    <section class="events-section" id="events">
+      <div class="events-container">
+        <div class="section-header text-center">
+          <span class="section-badge teal-badge">Campus Gatherings</span>
+          <h2 class="events-heading">Upcoming <span class="highlight-saffron">Events</span></h2>
+          <p class="events-subline">Seminars, workshops, campus activities &amp; seva drives.</p>
+        </div>
+
+        <div id="events-list" class="events-grid" aria-live="polite">
+          <div class="events-loading">
+            <span class="btn-spinner" aria-hidden="true"></span>
+            <p>Loading events...</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Gallery Section (id="gallery") -->
+    <section class="gallery-section" id="gallery">
+      <div class="gallery-container">
+        <div class="section-header text-center">
+          <span class="section-badge saffron-badge">Campus Archives</span>
+          <h2 class="gallery-heading">Gallery</h2>
+          <p class="gallery-subline">Moments from ABVP Khaira</p>
+        </div>
+
+        <div class="gallery-grid">
+          <!-- Slot 1 -->
+          <div class="gallery-item" tabindex="0" role="button" aria-label="View photo: Khaira College Mega Rally" data-caption="Khaira College Mega Student Rally — ABVP Karyakartas marching for student rights and better campus facilities.">
+            <div class="gallery-placeholder-fallback">
+              <span class="fallback-badge">Photo coming soon</span>
+            </div>
+            <img src="assets/gallery/1.jpg" alt="Khaira College Mega Student Rally" loading="lazy" class="gallery-img" onerror="this.style.display='none'; this.previousElementSibling.style.display='flex';">
+            <div class="gallery-overlay">
+              <span class="gallery-caption-preview">Mega Campus Rally</span>
+            </div>
+          </div>
+
+          <!-- Slot 2 -->
+          <div class="gallery-item" tabindex="0" role="button" aria-label="View photo: Student Leadership" data-caption="Student Leadership &amp; Karyakartas — Dedicated to campus seva and nation-building at Khaira College.">
+            <div class="gallery-placeholder-fallback">
+              <span class="fallback-badge">Photo coming soon</span>
+            </div>
+            <img src="assets/gallery/2.jpg" alt="Student Leadership at Khaira College" loading="lazy" class="gallery-img" onerror="this.style.display='none'; this.previousElementSibling.style.display='flex';">
+            <div class="gallery-overlay">
+              <span class="gallery-caption-preview">Youth Leadership</span>
+            </div>
+          </div>
+
+          <!-- Slot 3 -->
+          <div class="gallery-item" tabindex="0" role="button" aria-label="View photo: 15 Oct Election Poster" data-caption="Election Campaign 2026 — Vote for ABVP on 15 October for President and Secretary.">
+            <div class="gallery-placeholder-fallback">
+              <span class="fallback-badge">Photo coming soon</span>
+            </div>
+            <img src="assets/gallery/3.jpg" alt="Khaira College Election Campaign Poster" loading="lazy" class="gallery-img" onerror="this.style.display='none'; this.previousElementSibling.style.display='flex';">
+            <div class="gallery-overlay">
+              <span class="gallery-caption-preview">Election 15 Oct</span>
+            </div>
+          </div>
+
+          <!-- Slot 4 -->
+          <div class="gallery-item" tabindex="0" role="button" aria-label="View photo: Karyakarta Team &amp; Unity" data-caption="ABVP Khaira College Unit Team — Karyakartas united for struggle, service and leadership.">
+            <div class="gallery-placeholder-fallback">
+              <span class="fallback-badge">Photo coming soon</span>
+            </div>
+            <img src="assets/gallery/4.jpg" alt="ABVP Khaira College Unit Karyakarta Team" loading="lazy" class="gallery-img" onerror="this.style.display='none'; this.previousElementSibling.style.display='flex';">
+            <div class="gallery-overlay">
+              <span class="gallery-caption-preview">Karyakarta Team</span>
+            </div>
+          </div>
+
+          <!-- Slot 5 -->
+          <div class="gallery-item" tabindex="0" role="button" aria-label="View photo: Nationalist Pride &amp; Flag" data-caption="Nationalist Pride — Raising the saffron flag high for student welfare and youth empowerment.">
+            <div class="gallery-placeholder-fallback">
+              <span class="fallback-badge">Photo coming soon</span>
+            </div>
+            <img src="assets/gallery/5.jpg" alt="Nationalist Pride and Saffron Flag" loading="lazy" class="gallery-img" onerror="this.style.display='none'; this.previousElementSibling.style.display='flex';">
+            <div class="gallery-overlay">
+              <span class="gallery-caption-preview">Nationalist Spirit</span>
+            </div>
+          </div>
+
+          <!-- Slot 6 -->
+          <div class="gallery-item" tabindex="0" role="button" aria-label="View photo: Campus Student Solidarity" data-caption="Student Solidarity — Khaira College students standing united with ABVP.">
+            <div class="gallery-placeholder-fallback">
+              <span class="fallback-badge">Photo coming soon</span>
+            </div>
+            <img src="assets/gallery/6.jpg" alt="Student Solidarity at Khaira College" loading="lazy" class="gallery-img" onerror="this.style.display='none'; this.previousElementSibling.style.display='flex';">
+            <div class="gallery-overlay">
+              <span class="gallery-caption-preview">Student Solidarity</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Lightbox Modal -->
+    <div id="lightbox-modal" class="lightbox-modal" role="dialog" aria-modal="true" aria-label="Image Preview" style="display: none;">
+      <div class="lightbox-backdrop"></div>
+      <button class="lightbox-close" aria-label="Close preview">&times;</button>
+      <button class="lightbox-nav lightbox-prev" aria-label="Previous image">&#10094;</button>
+      <button class="lightbox-nav lightbox-next" aria-label="Next image">&#10095;</button>
+      <div class="lightbox-content">
+        <img id="lightbox-img" class="lightbox-img" src="" alt="Enlarged photo preview">
+        <div id="lightbox-caption" class="lightbox-caption"></div>
+      </div>
+    </div>
+
+    <!-- Student Direct Join Section (id="join-abvp") -->
+    <section class="join-abvp-section" id="join-abvp">
+      <div class="join-abvp-container">
+        <div class="section-header text-center">
+          <span class="section-badge saffron-badge">Student Membership</span>
+          <h2 class="join-abvp-heading">Join <span class="highlight-saffron">ABVP Khaira</span></h2>
+          <p class="join-abvp-subline">Students of Khaira College, join India's largest nationalist student movement.</p>
+        </div>
+
+        <div class="join-abvp-card">
+          <!-- State: Not logged in -->
+          <div id="join-abvp-logged-out" class="join-abvp-view">
+            <p class="join-card-text">Sign in with your Google account to join as an active student member instantly.</p>
+            <button type="button" id="join-abvp-google-btn" class="btn btn-google">
+              <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+              </svg>
+              <span>Continue with Google</span>
+            </button>
+          </div>
+
+          <!-- State: Logged in (active membership status) -->
+          <div id="join-abvp-logged-in" class="join-abvp-view" style="display: none;">
+            <div id="join-abvp-loading" class="join-loading" style="display: none;">
+              <span class="btn-spinner" aria-hidden="true"></span>
+              <p>Verifying student membership...</p>
+            </div>
+            <div id="join-abvp-success" class="join-feedback" style="display: none;">
+              <div class="feedback-badge-circle" aria-hidden="true">&#10003;</div>
+              <h3 id="join-abvp-message" class="feedback-title">Welcome to ABVP Khaira!</h3>
+              <p id="join-abvp-details" class="feedback-desc">You are an active student member. Gyan, Sheel, Ekta!</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Volunteer Application & Chat Modal (Opened from the ⋮ Menu) -->
+    <div id="volunteer-apply-modal" class="volunteer-modal" role="dialog" aria-modal="true" aria-labelledby="volunteer-modal-title" style="display: none;">
+      <div class="volunteer-modal-backdrop" id="volunteer-modal-backdrop"></div>
+      <div class="volunteer-modal-container">
+        <button type="button" class="modal-close-btn" id="volunteer-modal-close" aria-label="Close volunteer window">&times;</button>
+
+        <div class="volunteer-modal-content">
+          <!-- 1. Not Logged In View -->
+          <div id="volunteer-view-logged-out" class="volunteer-state-view" style="display: none;">
+            <div class="state-icon lock-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            </div>
+            <h3 class="state-title">Volunteer Application</h3>
+            <p class="state-desc">Login with Google to apply as an official ABVP Khaira karyakarta volunteer.</p>
+            <button type="button" id="volunteer-google-login-btn" class="btn btn-google">
+              <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+              </svg>
+              <span>Login with Google to apply</span>
+            </button>
+          </div>
+
+          <!-- 2. Application Form View (Logged in, no document) -->
+          <div id="volunteer-view-form" class="volunteer-state-view" style="display: none;">
+            <div class="form-header text-center">
+              <span class="section-badge saffron-badge">Karyakarta Seva</span>
+              <h3 id="volunteer-modal-title" class="form-heading">Volunteer Application</h3>
+              <p class="form-subtext">Apply to volunteer for campus welfare, cultural activities and community seva.</p>
+            </div>
+
+            <div id="volunteer-form-alert" class="form-alert" role="alert" style="display: none;"></div>
+
+            <form id="volunteer-apply-form" novalidate>
+              <div class="form-group">
+                <label for="apply-name" class="form-label">Name <span class="required-star">*</span> (Max 60)</label>
+                <input type="text" id="apply-name" name="name" class="form-input" maxlength="60" placeholder="Full name" required>
+                <div class="field-error" id="error-apply-name"></div>
+              </div>
+
+              <div class="form-group">
+                <label for="apply-email" class="form-label">Email (Read-only)</label>
+                <input type="email" id="apply-email" name="email" class="form-input input-readonly" readonly>
+              </div>
+
+              <div class="form-group">
+                <label for="apply-class" class="form-label">Class <span class="required-star">*</span></label>
+                <select id="apply-class" name="class" class="form-select" required>
+                  <option value="">-- Select Your Class --</option>
+                  <option value="+2 1st Year">+2 1st Year</option>
+                  <option value="+2 2nd Year">+2 2nd Year</option>
+                  <option value="+3 1st Year">+3 1st Year</option>
+                  <option value="+3 2nd Year">+3 2nd Year</option>
+                  <option value="Other">Other</option>
+                </select>
+                <div class="field-error" id="error-apply-class"></div>
+              </div>
+
+              <div class="form-group">
+                <label for="apply-phone" class="form-label">Phone Number <span class="required-star">*</span> (10 Digits)</label>
+                <input type="tel" id="apply-phone" name="phone" class="form-input" maxlength="10" inputmode="numeric" placeholder="10-digit mobile number" required>
+                <div class="field-error" id="error-apply-phone"></div>
+              </div>
+
+              <div class="form-group">
+                <label for="apply-college" class="form-label">College <span class="required-star">*</span> (Max 100)</label>
+                <input type="text" id="apply-college" name="college" class="form-input" value="Khaira College" maxlength="100" placeholder="College name" required>
+                <div class="field-error" id="error-apply-college"></div>
+              </div>
+
+              <div class="form-group">
+                <div class="label-with-counter">
+                  <label for="apply-why" class="form-label">Why do you want to volunteer? <span class="required-star">*</span></label>
+                  <span class="char-counter" id="apply-why-counter">0 / 300</span>
+                </div>
+                <textarea id="apply-why" name="why" class="form-textarea" maxlength="300" rows="3" placeholder="Briefly describe your interest in volunteering..." required></textarea>
+                <div class="field-error" id="error-apply-why"></div>
+              </div>
+
+              <button type="submit" id="apply-submit-btn" class="btn btn-primary btn-submit">
+                <span class="btn-text">Submit Volunteer Application</span>
+                <span class="btn-spinner" style="display: none;" aria-hidden="true"></span>
+              </button>
+            </form>
+          </div>
+
+          <!-- 3. Status View: Pending -->
+          <div id="volunteer-view-pending" class="volunteer-state-view" style="display: none;">
+            <div class="state-icon pending-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+            <span class="status-pill status-pending">Pending approval</span>
+            <h3 class="state-title">Application Submitted</h3>
+            <p class="state-desc">Waiting for admin approval.</p>
+          </div>
+
+          <!-- 4. Status View: Rejected -->
+          <div id="volunteer-view-rejected" class="volunteer-state-view" style="display: none;">
+            <div class="state-icon rejected-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+              </svg>
+            </div>
+            <span class="status-pill status-rejected">Rejected</span>
+            <h3 class="state-title">Application Update</h3>
+            <p class="state-desc">Your application was not approved.</p>
+          </div>
+
+          <!-- 5. Status View: Approved (Volunteer Live Chat) -->
+          <div id="volunteer-view-approved" class="volunteer-state-view" style="display: none;">
+            <div class="chat-header">
+              <div class="chat-header-info">
+                <span class="status-pill status-approved">Approved Volunteer</span>
+                <h3 class="chat-title">Volunteer Live Chat</h3>
+                <p class="chat-sub">Real-time collaboration for ABVP Khaira karyakartas.</p>
+              </div>
+            </div>
+
+            <div id="volunteer-chat" class="volunteer-chat-box">
+              <div id="chat-alert" class="chat-alert" style="display: none;" role="alert"></div>
+              <div id="chat-messages" class="chat-messages-container" aria-live="polite">
+                <div class="chat-loading">
+                  <span class="btn-spinner" aria-hidden="true"></span>
+                  <p>Loading messages...</p>
+                </div>
+              </div>
+
+              <form id="chat-send-form" class="chat-send-form" novalidate>
+                <div class="chat-input-wrapper">
+                  <input type="text" id="chat-input" class="chat-input" maxlength="500" placeholder="Type a message (max 500 chars)..." autocomplete="off" required>
+                  <button type="submit" id="chat-send-btn" class="btn btn-primary chat-send-btn" aria-label="Send message">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <line x1="22" y1="2" x2="11" y2="13"></line>
+                      <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QR Code Section (id="qr") -->
+    <section class="qr-section" id="qr">
+      <div class="qr-container">
+        <div class="section-header text-center">
+          <span class="section-badge saffron-badge">Share &amp; Connect</span>
+          <h2 class="qr-heading">Scan to Join <span class="highlight-saffron">ABVP Khaira</span></h2>
+          <p class="qr-subline">Share this QR code with your friends and classmates.</p>
+        </div>
+
+        <div class="qr-card">
+          <div class="qr-canvas-wrapper">
+            <div id="qr-error" class="qr-error-msg" style="display: none;">QR code could not load. Please refresh.</div>
+            <canvas id="qr-canvas" class="qr-canvas" width="260" height="260"></canvas>
+          </div>
+          <p class="qr-card-caption">abvpkhaira.web.app</p>
+          <div class="qr-actions">
+            <button type="button" id="qr-download-btn" class="btn btn-primary qr-btn">
+              <svg class="qr-btn-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span class="btn-text">Download QR</span>
+            </button>
+            <button type="button" id="qr-copy-btn" class="btn btn-secondary qr-btn">
+              <svg class="qr-btn-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <span class="btn-text">Copy Link</span>
+            </button>
+          </div>
+          <span id="qr-copy-feedback" class="copy-feedback-bubble" style="display: none;" role="status">Copied!</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact Section (id="contact") -->
+    <section class="contact-section" id="contact">
+      <div class="contact-container">
+        <div class="section-header text-center">
+          <span class="section-badge teal-badge">Direct Reach</span>
+          <h2 class="contact-heading">Contact <span class="highlight-saffron">Us</span></h2>
+          <p class="contact-subline">Connect with ABVP Khaira College unit leadership and karyakartas.</p>
+        </div>
+
+        <div class="contact-buttons-wrapper">
+          <!-- TODO: replace with real link -->
+          <a href="#" target="_blank" rel="noopener noreferrer" class="btn btn-whatsapp contact-btn" aria-label="Chat on WhatsApp">
+            <svg class="contact-icon" viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
+              <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.18 8.18 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.24-.75-.67-1.26-1.49-1.4-1.74-.15-.25-.02-.39.11-.51.11-.11.25-.29.37-.43.13-.15.17-.25.25-.42.08-.17.04-.32-.02-.45-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1s.9 2.43 1.03 2.6c.13.17 1.77 2.7 4.28 3.79.6.26 1.07.41 1.43.53.6.19 1.15.16 1.58.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.06-.1-.23-.17-.48-.3"></path>
+            </svg>
+            <span>WhatsApp</span>
+          </a>
+
+          <!-- TODO: replace with real link -->
+          <a href="#" target="_blank" rel="noopener noreferrer" class="btn btn-telegram contact-btn" aria-label="Join on Telegram">
+            <svg class="contact-icon" viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2m4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38"></path>
+            </svg>
+            <span>Telegram</span>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <span class="footer-motto-main">Students' Power, Nation's Power</span>
+          <span class="footer-motto-sub">Gyan, Sheel, Ekta</span>
+        </div>
+        <a href="#" class="back-to-top-btn" aria-label="Back to top">
+          Back to top
+          <svg class="top-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="18 15 12 9 6 15"></polyline>
+          </svg>
+        </a>
+      </div>
+      <div class="footer-bottom">
+        <p class="copyright-text">&copy; 2026 ABVP Khaira. All rights reserved.</p>
+        <p class="footer-unit-tag">Khaira College Unit &bull; Balasore, Odisha</p>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
