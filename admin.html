@@ -11,10 +11,11 @@
   <title>Admin Dashboard | ABVP Khaira College Unit</title>
   <link rel="stylesheet" href="css/admin.css">
 
-  <!-- Firebase Compat Libraries: Supported on file://, http://, and https:// with ZERO CORS errors -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <!-- Chart.js for real-time document metrics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Admin Panel Controller (ES Module) -->
+  <script type="module" src="js/admin.js"></script>
 </head>
 <body class="admin-body">
 
@@ -40,7 +41,7 @@
   <!-- Main Content Area -->
   <main class="admin-main">
 
-    <!-- 2. Login Screen (Only Google Sign-In for harekrushnaputhal76@gmail.com) -->
+    <!-- Login Screen (Email and password authentication) -->
     <section class="admin-login-view" id="login-view">
       <div class="login-card">
         <div class="login-icon" aria-hidden="true">
@@ -49,22 +50,25 @@
             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
           </svg>
         </div>
-        <h1 class="login-title">Karyakarta Login</h1>
+        <h1 class="login-title">Admin Login</h1>
         <p class="login-sub">Authorized Administrator Portal &bull; Khaira College Unit</p>
 
         <div id="login-alert" class="form-alert error" role="alert" style="display: none;"></div>
 
-        <!-- Single Google Login Button -->
-        <button type="button" id="admin-google-login-btn" class="btn btn-google-admin" aria-label="Sign in with Google as Admin">
-          <svg class="google-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-          </svg>
-          <span class="btn-text">Sign in with Google</span>
-          <span class="btn-spinner" style="display: none;" aria-hidden="true"></span>
-        </button>
+        <form id="admin-login-form" novalidate>
+          <div class="form-group">
+            <label for="admin-email" class="form-label">Email Address <span class="required-star">*</span></label>
+            <input type="email" id="admin-email" class="form-input" placeholder="admin@example.com" required autocomplete="email">
+          </div>
+          <div class="form-group">
+            <label for="admin-password" class="form-label">Password <span class="required-star">*</span></label>
+            <input type="password" id="admin-password" class="form-input" placeholder="Enter password" required autocomplete="current-password">
+          </div>
+          <button type="submit" id="admin-login-btn" class="btn btn-primary btn-submit">
+            <span class="btn-text">Sign In</span>
+            <span class="btn-spinner" style="display: none;" aria-hidden="true"></span>
+          </button>
+        </form>
 
         <p class="login-secure-notice">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -76,27 +80,66 @@
       </div>
     </section>
 
-    <!-- 4. Dashboard View (Only visible after verified authentication) -->
+    <!-- Dashboard View (Only visible after verified authentication) -->
     <section class="admin-dashboard-view" id="dashboard-view" style="display: none;">
       <div class="dashboard-header">
         <div>
           <h1 class="dashboard-title">Unit Management Console</h1>
-          <p class="dashboard-sub">Khaira College Unit &bull; Notices, Events &amp; Volunteers</p>
-        </div>
-        <div class="dashboard-header-actions">
-          <button type="button" id="admin-seed-data-btn" class="btn-seed" title="Populate initial real ABVP Khaira data into Cloud Firestore">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="17 8 12 3 7 8"></polyline>
-              <line x1="12" y1="3" x2="12" y2="15"></line>
-            </svg>
-            Seed Official Data
-          </button>
+          <p class="dashboard-sub">Khaira College Unit &bull; Live Cloud Firestore Control</p>
         </div>
       </div>
 
-      <div id="seed-data-alert" class="form-alert" role="alert" style="display: none;"></div>
       <div id="admin-firestore-notice" class="form-alert error" role="alert" style="display: none;"></div>
+
+      <!-- Real-Time Analytics Charts (Step 3) -->
+      <section class="admin-analytics-section" aria-label="Real-time Analytics">
+        <h2 class="admin-section-heading">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+          </svg>
+          Unit Analytics (Real-Time)
+        </h2>
+        <div class="admin-charts-grid">
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <h3 class="chart-card-title">Volunteers by Status</h3>
+              <p class="chart-card-sub">Pending, Approved, Rejected</p>
+            </div>
+            <div class="chart-container">
+              <canvas id="chart-volunteers"></canvas>
+            </div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <h3 class="chart-card-title">Members by Status</h3>
+              <p class="chart-card-sub">Active vs Blocked</p>
+            </div>
+            <div class="chart-container">
+              <canvas id="chart-members"></canvas>
+            </div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <h3 class="chart-card-title">Leaders by Position</h3>
+              <p class="chart-card-sub">Applications per position</p>
+            </div>
+            <div class="chart-container">
+              <canvas id="chart-leaders"></canvas>
+            </div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <h3 class="chart-card-title">New Volunteers per Day</h3>
+              <p class="chart-card-sub">Submissions grouped by date</p>
+            </div>
+            <div class="chart-container">
+              <canvas id="chart-volunteers-timeline"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <div class="dashboard-grid">
 
@@ -119,7 +162,7 @@
           <form id="post-notice-form" novalidate>
             <div class="form-group">
               <label for="notice-title" class="form-label">Title <span class="required-star">*</span> (Max 100)</label>
-              <input type="text" id="notice-title" class="form-input" maxlength="100" placeholder="e.g. Campus Unit Meeting on Saturday" required>
+              <input type="text" id="notice-title" class="form-input" maxlength="100" placeholder="e.g. Unit General Meeting" required>
             </div>
 
             <div class="form-group">
@@ -146,12 +189,11 @@
             </h2>
             <div class="card-header-actions">
               <span class="card-count-badge" id="notices-count-badge">0</span>
-              <button type="button" id="admin-delete-all-notices-btn" class="btn-delete-all" title="Delete all published notices">Delete All</button>
             </div>
           </div>
 
           <div id="admin-notices-list" class="admin-list" aria-live="polite">
-            <div class="empty-list-msg">Loading notices...</div>
+            <div class="empty-list-msg">No records yet.</div>
           </div>
         </div>
 
@@ -176,7 +218,7 @@
           <form id="add-event-form" novalidate>
             <div class="form-group">
               <label for="event-title" class="form-label">Event Title <span class="required-star">*</span></label>
-              <input type="text" id="event-title" class="form-input" maxlength="120" placeholder="e.g. Mission Sahasi Self-Defense Training" required>
+              <input type="text" id="event-title" class="form-input" maxlength="120" placeholder="e.g. Annual Student Conference" required>
             </div>
 
             <div class="form-group">
@@ -186,7 +228,7 @@
 
             <div class="form-group">
               <label for="event-location" class="form-label">Location <span class="required-star">*</span></label>
-              <input type="text" id="event-location" class="form-input" maxlength="120" placeholder="e.g. Khaira College Auditorium" required>
+              <input type="text" id="event-location" class="form-input" maxlength="120" placeholder="e.g. Khaira College Campus" required>
             </div>
 
             <div class="form-group">
@@ -215,12 +257,11 @@
             </h2>
             <div class="card-header-actions">
               <span class="card-count-badge" id="events-count-badge">0</span>
-              <button type="button" id="admin-delete-all-events-btn" class="btn-delete-all" title="Delete all scheduled events">Delete All</button>
             </div>
           </div>
 
           <div id="admin-events-list" class="admin-list" aria-live="polite">
-            <div class="empty-list-msg">Loading events...</div>
+            <div class="empty-list-msg">No records yet.</div>
           </div>
         </div>
 
@@ -251,12 +292,13 @@
                   <th>College</th>
                   <th>Why Volunteer</th>
                   <th>Status</th>
+                  <th>Created</th>
                   <th>Action</th>
                 </tr>
               </thead>
               <tbody id="admin-volunteers-tbody">
                 <tr>
-                  <td colspan="9" class="empty-list-msg">Loading volunteer applications...</td>
+                  <td colspan="10" class="empty-list-msg">No records yet.</td>
                 </tr>
               </tbody>
             </table>
@@ -285,12 +327,13 @@
                   <th>Name</th>
                   <th>Email</th>
                   <th>Status</th>
+                  <th>Created</th>
                   <th>Action</th>
                 </tr>
               </thead>
               <tbody id="admin-members-tbody">
                 <tr>
-                  <td colspan="5" class="empty-list-msg">Loading members...</td>
+                  <td colspan="6" class="empty-list-msg">No records yet.</td>
                 </tr>
               </tbody>
             </table>
@@ -320,14 +363,14 @@
                   <th>Class</th>
                   <th>Phone</th>
                   <th>Email</th>
-                  <th>Motivation</th>
+                  <th>Why</th>
                   <th>Status</th>
                   <th>Action</th>
                 </tr>
               </thead>
               <tbody id="admin-leaders-tbody">
                 <tr>
-                  <td colspan="9" class="empty-list-msg">Loading leader applications...</td>
+                  <td colspan="9" class="empty-list-msg">No records yet.</td>
                 </tr>
               </tbody>
             </table>
@@ -345,12 +388,11 @@
             </h2>
             <div class="card-header-actions">
               <span class="card-count-badge" id="chat-count-badge">0</span>
-              <button type="button" id="admin-delete-all-chat-btn" class="btn-delete-all" title="Clear all chat messages">Clear Chat</button>
             </div>
           </div>
 
           <div id="admin-chat-list" class="admin-list" aria-live="polite">
-            <div class="empty-list-msg">Loading chat messages...</div>
+            <div class="empty-list-msg">No records yet.</div>
           </div>
         </div>
 
@@ -358,900 +400,5 @@
     </section>
 
   </main>
-
-  <!-- Complete Admin Engine: Works on file://, http://, and https:// with zero CORS blocks -->
-  <script>
-    const ADMIN_EMAIL = 'harekrushnaputhal76@gmail.com';
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyAgCgOkECLLhaB8FhXZnfuHaNiAhbUEzWs",
-      authDomain: "avbp-9ab57.firebaseapp.com",
-      projectId: "avbp-9ab57",
-      storageBucket: "avbp-9ab57.firebasestorage.app",
-      messagingSenderId: "271196405124",
-      appId: "1:271196405124:web:c20905fb4e39fe067871d1",
-      measurementId: "G-J9XFW3DMMH"
-    };
-
-    let auth = null;
-    let db = null;
-
-    try {
-      if (typeof firebase !== 'undefined') {
-        const app = firebase.apps && firebase.apps.length ? firebase.app() : firebase.initializeApp(firebaseConfig);
-        auth = firebase.auth();
-        db = firebase.firestore();
-      }
-    } catch (e) {
-      console.warn('Firebase init status:', e);
-    }
-
-    // Dashboard Activation
-    function activateAdminDashboard(email) {
-      const activeEmail = email || ADMIN_EMAIL;
-      try {
-        localStorage.setItem('abvp_admin_session', 'true');
-        localStorage.setItem('abvp_admin_email', activeEmail);
-      } catch (e) {}
-
-      const loginView = document.getElementById('login-view');
-      const dashboardView = document.getElementById('dashboard-view');
-      const userBar = document.getElementById('admin-user-bar');
-      const userEmailElem = document.getElementById('admin-user-email');
-
-      if (userEmailElem) userEmailElem.textContent = activeEmail;
-      if (userBar) userBar.style.display = 'flex';
-      if (loginView) loginView.style.display = 'none';
-      if (dashboardView) dashboardView.style.display = 'flex';
-
-      startAdminListeners();
-    }
-
-    function deactivateAdminDashboard() {
-      try {
-        localStorage.removeItem('abvp_admin_session');
-        localStorage.removeItem('abvp_admin_email');
-      } catch (e) {}
-
-      const loginView = document.getElementById('login-view');
-      const dashboardView = document.getElementById('dashboard-view');
-      const userBar = document.getElementById('admin-user-bar');
-
-      if (userBar) userBar.style.display = 'none';
-      if (dashboardView) dashboardView.style.display = 'none';
-      if (loginView) loginView.style.display = 'flex';
-    }
-
-    // Check persistent session immediately on page load
-    try {
-      if (localStorage.getItem('abvp_admin_session') === 'true') {
-        const savedEmail = (localStorage.getItem('abvp_admin_email') || '').toLowerCase().trim();
-        if (savedEmail === ADMIN_EMAIL.toLowerCase()) {
-          activateAdminDashboard(savedEmail);
-        }
-      }
-    } catch (e) {}
-
-    // Auth observer if online
-    if (auth) {
-      auth.onAuthStateChanged((user) => {
-        if (user) {
-          const email = (user.email || '').toLowerCase().trim();
-          if (email === ADMIN_EMAIL.toLowerCase()) {
-            activateAdminDashboard(user.email);
-          } else {
-            const alertBox = document.getElementById('login-alert');
-            if (alertBox) {
-              alertBox.textContent = 'Access denied. You are not authorized as Admin.';
-              alertBox.style.display = 'block';
-            }
-            deactivateAdminDashboard();
-            auth.signOut();
-          }
-        }
-      });
-    }
-
-    // Google Sign-In Button Handler
-    const googleBtn = document.getElementById('admin-google-login-btn');
-    const loginAlert = document.getElementById('login-alert');
-
-    function showLoginAlert(msg) {
-      if (!loginAlert) return;
-      if (!msg) {
-        loginAlert.style.display = 'none';
-        loginAlert.textContent = '';
-        return;
-      }
-      loginAlert.textContent = msg;
-      loginAlert.style.display = 'block';
-    }
-
-    if (googleBtn) {
-      googleBtn.addEventListener('click', async () => {
-        showLoginAlert('');
-        setLoginSubmitting(true);
-
-        // If running on local file:// protocol (where browser blocks OAuth popup redirects)
-        if (window.location.protocol === 'file:') {
-          setLoginSubmitting(false);
-          const entered = window.prompt('Google Sign-In Verification (Local Environment)\n\nEnter authorized Administrator email:');
-          if (!entered) return;
-          if (entered.toLowerCase().trim() === ADMIN_EMAIL.toLowerCase()) {
-            activateAdminDashboard(ADMIN_EMAIL);
-            return;
-          } else {
-            showLoginAlert('Access Denied: You are not authorized to access this admin portal.');
-            return;
-          }
-        }
-
-        // If running on http/https
-        if (auth) {
-          try {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            provider.setCustomParameters({ prompt: 'select_account' });
-            const cred = await auth.signInWithPopup(provider);
-            const user = cred.user;
-            const email = (user.email || '').toLowerCase().trim();
-            if (email === ADMIN_EMAIL.toLowerCase()) {
-              activateAdminDashboard(user.email);
-            } else {
-              showLoginAlert('Access Denied: This account is not authorized as Admin.');
-              await auth.signOut();
-            }
-          } catch (err) {
-            console.warn('Google sign-in error:', err);
-            if (err.code === 'auth/popup-closed-by-user') {
-              showLoginAlert('Sign-in window was closed before completing. Please try again.');
-            } else if (err.code === 'auth/operation-not-supported-in-this-environment') {
-              const entered = window.prompt('Enter authorized Administrator email:');
-              if (entered && entered.toLowerCase().trim() === ADMIN_EMAIL.toLowerCase()) {
-                activateAdminDashboard(ADMIN_EMAIL);
-              } else if (entered) {
-                showLoginAlert('Access Denied: You are not authorized to access this admin portal.');
-              }
-            } else {
-              showLoginAlert('Login error: ' + (err.message || err.code));
-            }
-          } finally {
-            setLoginSubmitting(false);
-          }
-        } else {
-          setLoginSubmitting(false);
-          const entered = window.prompt('Enter authorized Administrator email:');
-          if (entered && entered.toLowerCase().trim() === ADMIN_EMAIL.toLowerCase()) {
-            activateAdminDashboard(ADMIN_EMAIL);
-          } else if (entered) {
-            showLoginAlert('Access Denied: You are not authorized to access this admin portal.');
-          }
-        }
-      });
-    }
-
-    function setLoginSubmitting(isSubmitting) {
-      if (googleBtn) {
-        googleBtn.disabled = isSubmitting;
-        const textElem = googleBtn.querySelector('.btn-text');
-        const spinnerElem = googleBtn.querySelector('.btn-spinner');
-        if (textElem) textElem.textContent = isSubmitting ? 'Signing in with Google...' : 'Sign in with Google';
-        if (spinnerElem) spinnerElem.style.display = isSubmitting ? 'inline-block' : 'none';
-      }
-    }
-
-    // Logout
-    const logoutBtn = document.getElementById('admin-logout-btn');
-    if (logoutBtn) {
-      logoutBtn.addEventListener('click', async () => {
-        deactivateAdminDashboard();
-        if (auth) {
-          try { await auth.signOut(); } catch (e) {}
-        }
-      });
-    }
-
-    // Official ABVP Khaira Real-Time Dataset
-    const DEFAULT_NOTICES = [
-      {
-        id: "n-1",
-        title: "Khaira College Student Union Election - 15 October 2026",
-        message: "All students of Khaira College are requested to support and vote for ABVP candidates for President & General Secretary. Struggle, Service, Leadership!",
-        date: "10 Oct 2026"
-      },
-      {
-        id: "n-2",
-        title: "Science Laboratory Modernization & Upgrade Demand",
-        message: "ABVP delegation submitted an official memorandum to the College Principal demanding modernized equipment for Physics, Chemistry & Botany laboratories.",
-        date: "08 Oct 2026"
-      },
-      {
-        id: "n-3",
-        title: "Pre-Exam Free Book Distribution Drive",
-        message: "Free academic reference books and honours notes for +2 and +3 students are now available at the ABVP campus help desk.",
-        date: "05 Oct 2026"
-      }
-    ];
-
-    const DEFAULT_EVENTS = [
-      {
-        id: "e-1",
-        title: "Mission Sahasi: Self-Defense Training Workshop",
-        date: "2026-10-14",
-        location: "Khaira College Auditorium",
-        description: "Professional martial arts instructors empowering female students with physical confidence, awareness, and bravery techniques."
-      },
-      {
-        id: "e-2",
-        title: "Student Union Voting Day & Assistance Desk",
-        date: "2026-10-15",
-        location: "Campus Main Gate Helpdesk",
-        description: "Cast your vote for ABVP candidates for President and Secretary. Join the volunteer support desk to guide first-time student voters."
-      },
-      {
-        id: "e-3",
-        title: "Swachh Campus & Tree Plantation Drive",
-        date: "2026-10-20",
-        location: "College Campus Grounds",
-        description: "Annual campus beautification, tree plantation, and anti-plastic environmental campaign led by ABVP volunteers."
-      }
-    ];
-
-    const DEFAULT_VOLUNTEERS = [
-      {
-        id: "v-1",
-        name: "Priyaranjan Jena",
-        email: "priyaranjan.jena@gmail.com",
-        class: "+3 2nd Year",
-        phone: "9861001234",
-        college: "Khaira College",
-        why: "Dedicated to student welfare and nationalist campus leadership.",
-        status: "approved"
-      },
-      {
-        id: "v-2",
-        name: "Subhashree Mohapatra",
-        email: "subhashree.m@gmail.com",
-        class: "+2 1st Year",
-        phone: "9777123456",
-        college: "Khaira College",
-        why: "Want to lead Mission Sahasi initiatives for female students.",
-        status: "approved"
-      },
-      {
-        id: "v-3",
-        name: "Bikram Kumar Nayak",
-        email: "bikram.nayak@gmail.com",
-        class: "+3 1st Year",
-        phone: "9439876543",
-        college: "Khaira College",
-        why: "Passionate about blood donation camps and college library upgrade.",
-        status: "pending"
-      },
-      {
-        id: "v-4",
-        name: "Soumya Ranjan Rout",
-        email: "soumya.rout@gmail.com",
-        class: "+3 2nd Year",
-        phone: "9124567890",
-        college: "Khaira College",
-        why: "Active in sports and cultural youth festivals.",
-        status: "pending"
-      }
-    ];
-
-    const DEFAULT_MEMBERS = [
-      {
-        id: "m-1",
-        name: "Harekrushna Puthal",
-        email: "harekrushnaputhal76@gmail.com",
-        status: "active"
-      },
-      {
-        id: "m-2",
-        name: "Anil Kumar Barik",
-        email: "anil.khaira@gmail.com",
-        status: "active"
-      },
-      {
-        id: "m-3",
-        name: "Monalisa Das",
-        email: "monalisa.abvp@gmail.com",
-        status: "active"
-      },
-      {
-        id: "m-4",
-        name: "Rakesh Mohanty",
-        email: "rakesh.student@gmail.com",
-        status: "active"
-      }
-    ];
-
-    const DEFAULT_LEADERS = [
-      {
-        id: "l-1",
-        name: "Priyaranjan Jena",
-        position: "Unit General Secretary",
-        class: "+3 2nd Year",
-        phone: "9861001234",
-        email: "priyaranjan.jena@gmail.com",
-        motivation: "Uncompromising fight for college laboratory upgrade & library facilities.",
-        status: "approved"
-      },
-      {
-        id: "l-2",
-        name: "Tanmay Kumar Sahu",
-        position: "College President Candidate",
-        class: "+3 3rd Year",
-        phone: "9437123456",
-        email: "tanmay.sahu@gmail.com",
-        motivation: "Leading karyakartas with discipline, nationalist pride, and 24/7 student service.",
-        status: "approved"
-      }
-    ];
-
-    const DEFAULT_CHAT = [
-      {
-        id: "c-1",
-        name: "Harekrushna Puthal",
-        text: "Namaskar karyakartas! Let's prepare the college main gate student help desk for tomorrow.",
-        time: "09:30 AM"
-      },
-      {
-        id: "c-2",
-        name: "Priyaranjan Jena",
-        text: "Yes, the election posters and science lab memorandum copies are printed and ready.",
-        time: "09:45 AM"
-      },
-      {
-        id: "c-3",
-        name: "Subhashree Mohapatra",
-        text: "Mission Sahasi registration desk is also arranged near the auditorium hall.",
-        time: "10:15 AM"
-      }
-    ];
-
-    // Reactive Local Store Helpers
-    function getRealStore(key, defaultData) {
-      try {
-        const stored = localStorage.getItem('abvp_real_' + key);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch (e) {}
-      localStorage.setItem('abvp_real_' + key, JSON.stringify(defaultData));
-      return defaultData;
-    }
-
-    function setRealStore(key, data) {
-      try {
-        localStorage.setItem('abvp_real_' + key, JSON.stringify(data));
-      } catch (e) {}
-    }
-
-    // Render 1: Notices
-    function renderNotices() {
-      const list = document.getElementById('admin-notices-list');
-      const badge = document.getElementById('notices-count-badge');
-      const items = getRealStore('notices', DEFAULT_NOTICES);
-      if (badge) badge.textContent = items.length;
-      if (!list) return;
-
-      if (items.length === 0) {
-        list.innerHTML = '<div class="empty-list-msg">No notices published yet.</div>';
-        return;
-      }
-
-      list.innerHTML = items.map(d => `
-        <div class="admin-list-item" id="notice-item-${d.id}">
-          <div class="item-main">
-            <div class="item-title">${escapeHtml(d.title || 'Untitled')}</div>
-            <div class="item-date">${escapeHtml(d.date || 'Recent')}</div>
-            <div class="item-desc">${escapeHtml(d.message || '')}</div>
-          </div>
-          <div class="item-actions">
-            <button type="button" class="btn-action-delete" onclick="window.adminDeleteNotice('${d.id}')">Delete</button>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    // Render 2: Events
-    function renderEvents() {
-      const list = document.getElementById('admin-events-list');
-      const badge = document.getElementById('events-count-badge');
-      const items = getRealStore('events', DEFAULT_EVENTS);
-      if (badge) badge.textContent = items.length;
-      if (!list) return;
-
-      if (items.length === 0) {
-        list.innerHTML = '<div class="empty-list-msg">No events scheduled yet.</div>';
-        return;
-      }
-
-      list.innerHTML = items.map(d => `
-        <div class="admin-list-item" id="event-item-${d.id}">
-          <div class="item-main">
-            <div class="item-title">${escapeHtml(d.title || 'Untitled')}</div>
-            <div class="item-date">Date: ${escapeHtml(d.date || 'TBA')} &bull; Loc: ${escapeHtml(d.location || 'Khaira College')}</div>
-            <div class="item-desc">${escapeHtml(d.description || '')}</div>
-          </div>
-          <div class="item-actions">
-            <button type="button" class="btn-action-delete" onclick="window.adminDeleteEvent('${d.id}')">Delete</button>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    // Render 3: Volunteers
-    function renderVolunteers() {
-      const tbody = document.getElementById('admin-volunteers-tbody');
-      const badge = document.getElementById('volunteers-count-badge');
-      const items = getRealStore('volunteers', DEFAULT_VOLUNTEERS);
-      if (badge) badge.textContent = items.length;
-      if (!tbody) return;
-
-      if (items.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" class="empty-list-msg">No volunteer applications yet.</td></tr>';
-        return;
-      }
-
-      tbody.innerHTML = items.map((d, i) => {
-        const status = (d.status || 'pending').toLowerCase();
-        const statusClass = status === 'approved' ? 'status-approved' : (status === 'rejected' ? 'status-rejected' : 'status-pending');
-        return `
-          <tr>
-            <td>${i + 1}</td>
-            <td><strong>${escapeHtml(d.name || '-')}</strong></td>
-            <td>${escapeHtml(d.email || '-')}</td>
-            <td>${escapeHtml(d.class || '-')}</td>
-            <td>${escapeHtml(d.phone || '-')}</td>
-            <td>${escapeHtml(d.college || '-')}</td>
-            <td><div class="table-text-cell" title="${escapeHtml(d.why || '')}">${escapeHtml(d.why || '-')}</div></td>
-            <td><span class="status-badge ${statusClass}">${status}</span></td>
-            <td>
-              <div class="table-action-btns">
-                ${status !== 'approved' ? `<button type="button" class="btn-action-approve" onclick="window.adminApproveVolunteer('${d.id}')">Approve</button>` : ''}
-                ${status !== 'rejected' ? `<button type="button" class="btn-action-reject" onclick="window.adminRejectVolunteer('${d.id}')">Reject</button>` : ''}
-                <button type="button" class="btn-action-delete" onclick="window.adminDeleteVolunteer('${d.id}')">Del</button>
-              </div>
-            </td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    // Render 4: Members
-    function renderMembers() {
-      const tbody = document.getElementById('admin-members-tbody');
-      const badge = document.getElementById('members-count-badge');
-      const items = getRealStore('members', DEFAULT_MEMBERS);
-      if (badge) badge.textContent = items.length;
-      if (!tbody) return;
-
-      if (items.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="empty-list-msg">No members joined yet.</td></tr>';
-        return;
-      }
-
-      tbody.innerHTML = items.map((d, i) => `
-        <tr>
-          <td>${i + 1}</td>
-          <td><strong>${escapeHtml(d.name || '-')}</strong></td>
-          <td>${escapeHtml(d.email || '-')}</td>
-          <td><span class="status-badge status-approved">${escapeHtml(d.status || 'active')}</span></td>
-          <td><button type="button" class="btn-action-delete" onclick="window.adminDeleteMember('${d.id}')">Delete</button></td>
-        </tr>
-      `).join('');
-    }
-
-    // Render 5: Leaders
-    function renderLeaders() {
-      const tbody = document.getElementById('admin-leaders-tbody');
-      const badge = document.getElementById('leaders-count-badge');
-      const items = getRealStore('leaders', DEFAULT_LEADERS);
-      if (badge) badge.textContent = items.length;
-      if (!tbody) return;
-
-      if (items.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" class="empty-list-msg">No leader applications yet.</td></tr>';
-        return;
-      }
-
-      tbody.innerHTML = items.map((d, i) => {
-        const status = (d.status || 'pending').toLowerCase();
-        const statusClass = status === 'approved' ? 'status-approved' : (status === 'rejected' ? 'status-rejected' : 'status-pending');
-        return `
-          <tr>
-            <td>${i + 1}</td>
-            <td><strong>${escapeHtml(d.name || '-')}</strong></td>
-            <td>${escapeHtml(d.position || '-')}</td>
-            <td>${escapeHtml(d.class || '-')}</td>
-            <td>${escapeHtml(d.phone || '-')}</td>
-            <td>${escapeHtml(d.email || '-')}</td>
-            <td><div class="table-text-cell">${escapeHtml(d.motivation || '-')}</div></td>
-            <td><span class="status-badge ${statusClass}">${status}</span></td>
-            <td>
-              <div class="table-action-btns">
-                ${status !== 'approved' ? `<button type="button" class="btn-action-approve" onclick="window.adminApproveLeader('${d.id}')">Approve</button>` : ''}
-                ${status !== 'rejected' ? `<button type="button" class="btn-action-reject" onclick="window.adminRejectLeader('${d.id}')">Reject</button>` : ''}
-                <button type="button" class="btn-action-delete" onclick="window.adminDeleteLeader('${d.id}')">Del</button>
-              </div>
-            </td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    // Render 6: Chat
-    function renderChat() {
-      const list = document.getElementById('admin-chat-list');
-      const badge = document.getElementById('chat-count-badge');
-      const items = getRealStore('chat', DEFAULT_CHAT);
-      if (badge) badge.textContent = items.length;
-      if (!list) return;
-
-      if (items.length === 0) {
-        list.innerHTML = '<div class="empty-list-msg">No messages in chat.</div>';
-        return;
-      }
-
-      list.innerHTML = items.map(d => `
-        <div class="admin-chat-item">
-          <div>
-            <strong>${escapeHtml(d.name || 'Anonymous')}:</strong>
-            <span>${escapeHtml(d.text || '')}</span>
-            <small style="color: #94A3B8; margin-left: 0.5rem;">${escapeHtml(d.time || '')}</small>
-          </div>
-          <button type="button" class="btn-action-delete" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="window.adminDeleteChatMessage('${d.id}')">Del</button>
-        </div>
-      `).join('');
-      list.scrollTop = list.scrollHeight;
-    }
-
-    // Initialize Dashboard Listeners and Render Live Data Immediately
-    function startAdminListeners() {
-      // 1. Immediately render all active records
-      renderNotices();
-      renderEvents();
-      renderVolunteers();
-      renderMembers();
-      renderLeaders();
-      renderChat();
-
-      // 2. Connect to Cloud Firestore in background if available
-      if (!db) return;
-
-      try {
-        db.collection('notices').orderBy('createdAt', 'desc').onSnapshot((snap) => {
-          if (!snap.empty) {
-            const arr = [];
-            snap.forEach(doc => {
-              const d = doc.data();
-              const dateStr = d.createdAt && d.createdAt.toDate ? d.createdAt.toDate().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recent';
-              arr.push({ id: doc.id, title: d.title, message: d.message, date: dateStr });
-            });
-            setRealStore('notices', arr);
-            renderNotices();
-          }
-        }, (err) => {
-          console.warn('Firestore live notice listener info:', err.message);
-        });
-      } catch (e) {}
-
-      try {
-        db.collection('events').orderBy('createdAt', 'desc').onSnapshot((snap) => {
-          if (!snap.empty) {
-            const arr = [];
-            snap.forEach(doc => {
-              const d = doc.data();
-              arr.push({ id: doc.id, title: d.title, date: d.date, location: d.location, description: d.description });
-            });
-            setRealStore('events', arr);
-            renderEvents();
-          }
-        }, (err) => {
-          console.warn('Firestore live events listener info:', err.message);
-        });
-      } catch (e) {}
-
-      try {
-        db.collection('volunteers').orderBy('createdAt', 'desc').onSnapshot((snap) => {
-          if (!snap.empty) {
-            const arr = [];
-            snap.forEach(doc => {
-              const d = doc.data();
-              arr.push({ id: doc.id, ...d });
-            });
-            setRealStore('volunteers', arr);
-            renderVolunteers();
-          }
-        }, (err) => {
-          console.warn('Firestore live volunteers listener info:', err.message);
-        });
-      } catch (e) {}
-    }
-
-    // Window User Action Callbacks (Real-time updates)
-    window.adminDeleteNotice = async (id) => {
-      if (confirm('Delete this notice?')) {
-        let items = getRealStore('notices', DEFAULT_NOTICES).filter(n => n.id !== id);
-        setRealStore('notices', items);
-        renderNotices();
-        if (db) { try { await db.collection('notices').doc(id).delete(); } catch (e) {} }
-      }
-    };
-
-    window.adminDeleteEvent = async (id) => {
-      if (confirm('Delete this event?')) {
-        let items = getRealStore('events', DEFAULT_EVENTS).filter(e => e.id !== id);
-        setRealStore('events', items);
-        renderEvents();
-        if (db) { try { await db.collection('events').doc(id).delete(); } catch (e) {} }
-      }
-    };
-
-    window.adminApproveVolunteer = async (id) => {
-      let items = getRealStore('volunteers', DEFAULT_VOLUNTEERS).map(v => v.id === id ? { ...v, status: 'approved' } : v);
-      setRealStore('volunteers', items);
-      renderVolunteers();
-      if (db) { try { await db.collection('volunteers').doc(id).update({ status: 'approved' }); } catch (e) {} }
-    };
-
-    window.adminRejectVolunteer = async (id) => {
-      let items = getRealStore('volunteers', DEFAULT_VOLUNTEERS).map(v => v.id === id ? { ...v, status: 'rejected' } : v);
-      setRealStore('volunteers', items);
-      renderVolunteers();
-      if (db) { try { await db.collection('volunteers').doc(id).update({ status: 'rejected' }); } catch (e) {} }
-    };
-
-    window.adminDeleteVolunteer = async (id) => {
-      if (confirm('Delete this volunteer application?')) {
-        let items = getRealStore('volunteers', DEFAULT_VOLUNTEERS).filter(v => v.id !== id);
-        setRealStore('volunteers', items);
-        renderVolunteers();
-        if (db) { try { await db.collection('volunteers').doc(id).delete(); } catch (e) {} }
-      }
-    };
-
-    window.adminDeleteMember = async (id) => {
-      if (confirm('Remove this member?')) {
-        let items = getRealStore('members', DEFAULT_MEMBERS).filter(m => m.id !== id);
-        setRealStore('members', items);
-        renderMembers();
-        if (db) { try { await db.collection('members').doc(id).delete(); } catch (e) {} }
-      }
-    };
-
-    window.adminApproveLeader = async (id) => {
-      let items = getRealStore('leaders', DEFAULT_LEADERS).map(l => l.id === id ? { ...l, status: 'approved' } : l);
-      setRealStore('leaders', items);
-      renderLeaders();
-      if (db) { try { await db.collection('leaders').doc(id).update({ status: 'approved' }); } catch (e) {} }
-    };
-
-    window.adminRejectLeader = async (id) => {
-      let items = getRealStore('leaders', DEFAULT_LEADERS).map(l => l.id === id ? { ...l, status: 'rejected' } : l);
-      setRealStore('leaders', items);
-      renderLeaders();
-      if (db) { try { await db.collection('leaders').doc(id).update({ status: 'rejected' }); } catch (e) {} }
-    };
-
-    window.adminDeleteLeader = async (id) => {
-      if (confirm('Delete this leader application?')) {
-        let items = getRealStore('leaders', DEFAULT_LEADERS).filter(l => l.id !== id);
-        setRealStore('leaders', items);
-        renderLeaders();
-        if (db) { try { await db.collection('leaders').doc(id).delete(); } catch (e) {} }
-      }
-    };
-
-    window.adminDeleteChatMessage = async (id) => {
-      let items = getRealStore('chat', DEFAULT_CHAT).filter(c => c.id !== id);
-      setRealStore('chat', items);
-      renderChat();
-      if (db) { try { await db.collection('chat').doc(id).delete(); } catch (e) {} }
-    };
-
-    // Notice Post Form
-    const noticeForm = document.getElementById('post-notice-form');
-    if (noticeForm) {
-      noticeForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const title = document.getElementById('notice-title').value.trim();
-        const message = document.getElementById('notice-message').value.trim();
-        const alertBox = document.getElementById('notice-form-alert');
-        const submitBtn = document.getElementById('notice-submit-btn');
-        if (!title || !message) return;
-
-        const newNotice = {
-          id: 'n-' + Date.now(),
-          title,
-          message,
-          date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
-        };
-
-        const currentNotices = getRealStore('notices', DEFAULT_NOTICES);
-        currentNotices.unshift(newNotice);
-        setRealStore('notices', currentNotices);
-        renderNotices();
-
-        if (alertBox) {
-          alertBox.className = 'form-alert success';
-          alertBox.textContent = 'Notice published successfully!';
-          alertBox.style.display = 'block';
-          setTimeout(() => { alertBox.style.display = 'none'; }, 4000);
-        }
-        noticeForm.reset();
-
-        if (db) {
-          try {
-            await db.collection('notices').add({
-              title,
-              message,
-              createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-          } catch (err) {}
-        }
-      });
-    }
-
-    // Event Add Form
-    const eventForm = document.getElementById('add-event-form');
-    if (eventForm) {
-      eventForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const title = document.getElementById('event-title').value.trim();
-        const date = document.getElementById('event-date').value;
-        const location = document.getElementById('event-location').value.trim();
-        const description = document.getElementById('event-description').value.trim();
-        const alertBox = document.getElementById('event-form-alert');
-        if (!title || !date || !location) return;
-
-        const newEvent = {
-          id: 'e-' + Date.now(),
-          title,
-          date,
-          location,
-          description
-        };
-
-        const currentEvents = getRealStore('events', DEFAULT_EVENTS);
-        currentEvents.unshift(newEvent);
-        setRealStore('events', currentEvents);
-        renderEvents();
-
-        if (alertBox) {
-          alertBox.className = 'form-alert success';
-          alertBox.textContent = 'Event scheduled successfully!';
-          alertBox.style.display = 'block';
-          setTimeout(() => { alertBox.style.display = 'none'; }, 4000);
-        }
-        eventForm.reset();
-
-        if (db) {
-          try {
-            await db.collection('events').add({
-              title,
-              date,
-              location,
-              description,
-              createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-          } catch (err) {}
-        }
-      });
-    }
-
-    // Delete All Buttons
-    const delAllNotices = document.getElementById('admin-delete-all-notices-btn');
-    if (delAllNotices) {
-      delAllNotices.addEventListener('click', async () => {
-        if (!confirm('Are you sure you want to delete ALL notices?')) return;
-        setRealStore('notices', []);
-        renderNotices();
-        if (db) {
-          try {
-            const snap = await db.collection('notices').get();
-            const batch = db.batch();
-            snap.forEach(d => batch.delete(d.ref));
-            await batch.commit();
-          } catch (e) {}
-        }
-      });
-    }
-
-    const delAllEvents = document.getElementById('admin-delete-all-events-btn');
-    if (delAllEvents) {
-      delAllEvents.addEventListener('click', async () => {
-        if (!confirm('Are you sure you want to delete ALL events?')) return;
-        setRealStore('events', []);
-        renderEvents();
-        if (db) {
-          try {
-            const snap = await db.collection('events').get();
-            const batch = db.batch();
-            snap.forEach(d => batch.delete(d.ref));
-            await batch.commit();
-          } catch (e) {}
-        }
-      });
-    }
-
-    const delAllChat = document.getElementById('admin-delete-all-chat-btn');
-    if (delAllChat) {
-      delAllChat.addEventListener('click', async () => {
-        if (!confirm('Clear all chat messages?')) return;
-        setRealStore('chat', []);
-        renderChat();
-        if (db) {
-          try {
-            const snap = await db.collection('chat').get();
-            const batch = db.batch();
-            snap.forEach(d => batch.delete(d.ref));
-            await batch.commit();
-          } catch (e) {}
-        }
-      });
-    }
-
-    // Seed Official Data Action (Repopulate real data instantly)
-    const seedBtn = document.getElementById('admin-seed-data-btn');
-    if (seedBtn) {
-      seedBtn.addEventListener('click', async () => {
-        const seedAlert = document.getElementById('seed-data-alert');
-        setRealStore('notices', DEFAULT_NOTICES);
-        setRealStore('events', DEFAULT_EVENTS);
-        setRealStore('volunteers', DEFAULT_VOLUNTEERS);
-        setRealStore('members', DEFAULT_MEMBERS);
-        setRealStore('leaders', DEFAULT_LEADERS);
-        setRealStore('chat', DEFAULT_CHAT);
-
-        renderNotices();
-        renderEvents();
-        renderVolunteers();
-        renderMembers();
-        renderLeaders();
-        renderChat();
-
-        if (seedAlert) {
-          seedAlert.className = 'form-alert success';
-          seedAlert.textContent = 'Official real-time ABVP Khaira data loaded successfully!';
-          seedAlert.style.display = 'block';
-          setTimeout(() => { seedAlert.style.display = 'none'; }, 4000);
-        }
-
-        if (db) {
-          try {
-            for (const n of DEFAULT_NOTICES) {
-              await db.collection('notices').add({
-                title: n.title,
-                message: n.message,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-              });
-            }
-            for (const ev of DEFAULT_EVENTS) {
-              await db.collection('events').add({
-                title: ev.title,
-                date: ev.date,
-                location: ev.location,
-                description: ev.description,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-              });
-            }
-          } catch (err) {}
-        }
-      });
-    }
-
-    function escapeHtml(str) {
-      return String(str || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    }
-  </script>
 </body>
 </html>

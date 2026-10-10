@@ -1,8 +1,7 @@
-// Admin Panel Controller for ABVP Khaira College Unit
+// Admin Panel Controller for ABVP Khaira College Unit (Real Cloud Firestore Only)
 import { auth, db } from './firebase.js';
 import {
-  signInWithPopup,
-  GoogleAuthProvider,
+  signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
@@ -14,15 +13,14 @@ import {
   doc,
   query,
   orderBy,
-  limitToLast,
+  limit,
   onSnapshot,
-  getDocs,
   serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 const ADMIN_EMAIL = 'harekrushnaputhal76@gmail.com';
 
-let currentUser = null;
+// Active unsubscribe handles
 let unsubNotices = null;
 let unsubEvents = null;
 let unsubVolunteers = null;
@@ -30,14 +28,27 @@ let unsubMembers = null;
 let unsubLeaders = null;
 let unsubChat = null;
 
+// Chart.js instances
+let chartVolunteers = null;
+let chartMembers = null;
+let chartLeaders = null;
+let chartTimeline = null;
+
+// Brand color palette
+const CHART_COLORS = {
+  saffron: '#D9730D',
+  maroon: '#6B1E1E',
+  navy: '#0F172A',
+  teal: '#2F6F62',
+  gray: '#94A3B8'
+};
+
 function initAdmin() {
   initAuthObserver();
   initLoginForm();
   initLogout();
   initNoticePostForm();
   initEventPostForm();
-  initDeleteAllActions();
-  initSeedDataAction();
 }
 
 if (document.readyState === 'loading') {
@@ -46,12 +57,134 @@ if (document.readyState === 'loading') {
   initAdmin();
 }
 
-function activateAdminDashboard(email) {
-  try {
-    localStorage.setItem('abvp_admin_session', 'true');
-    localStorage.setItem('abvp_admin_email', email || ADMIN_EMAIL);
-  } catch (e) {}
+/**
+ * 1. Authentication State Observer
+ */
+function initAuthObserver() {
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      const email = (user.email || '').toLowerCase().trim();
+      if (email === ADMIN_EMAIL.toLowerCase()) {
+        activateAdminDashboard(user.email);
+      } else {
+        showLoginAlert(`Access denied. Signed in as ${user.email}, but only ${ADMIN_EMAIL} is authorized.`);
+        deactivateAdminDashboard();
+        try {
+          await signOut(auth);
+        } catch (e) {
+          console.warn('Sign out error:', e);
+        }
+      }
+    } else {
+      deactivateAdminDashboard();
+    }
+  });
+}
 
+/**
+ * 2. Login Form (Email & Password Only)
+ */
+function initLoginForm() {
+  const form = document.getElementById('admin-login-form');
+  const emailInput = document.getElementById('admin-email');
+  const passwordInput = document.getElementById('admin-password');
+  const submitBtn = document.getElementById('admin-login-btn');
+
+  if (!form) return;
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    showLoginAlert('');
+
+    const email = emailInput ? emailInput.value.trim() : '';
+    const password = passwordInput ? passwordInput.value : '';
+
+    if (!email || !password) {
+      showLoginAlert('Please enter both your admin email address and password.');
+      return;
+    }
+
+    if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+      showLoginAlert(`Access denied. ${email} is not authorized as Unit Administrator.`);
+      return;
+    }
+
+    setLoginSubmitting(true);
+
+    try {
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      const user = cred.user;
+      const userEmail = (user.email || '').toLowerCase().trim();
+
+      if (userEmail === ADMIN_EMAIL.toLowerCase()) {
+        activateAdminDashboard(user.email);
+        if (passwordInput) passwordInput.value = '';
+      } else {
+        showLoginAlert(`Access denied. Only ${ADMIN_EMAIL} is authorized.`);
+        await signOut(auth);
+      }
+    } catch (err) {
+      console.warn('Admin sign-in failure:', err);
+      let msg = 'Authentication failed. Please verify your credentials.';
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
+        msg = 'Invalid email or password. Please re-enter your administrative credentials.';
+      } else if (err.code === 'auth/too-many-requests') {
+        msg = 'Too many failed login attempts. Please wait a few minutes before trying again.';
+      } else if (err.code === 'auth/network-request-failed') {
+        msg = 'Network connection error. Please check your internet connection.';
+      } else if (err.message) {
+        msg = err.message;
+      }
+      showLoginAlert(msg);
+    } finally {
+      setLoginSubmitting(false);
+    }
+  });
+}
+
+function setLoginSubmitting(isSubmitting) {
+  const btn = document.getElementById('admin-login-btn');
+  if (!btn) return;
+  btn.disabled = isSubmitting;
+  const textElem = btn.querySelector('.btn-text');
+  const spinnerElem = btn.querySelector('.btn-spinner');
+  if (textElem) textElem.textContent = isSubmitting ? 'Authenticating...' : 'Sign In';
+  if (spinnerElem) spinnerElem.style.display = isSubmitting ? 'inline-block' : 'none';
+}
+
+function showLoginAlert(msg) {
+  const alertElem = document.getElementById('login-alert');
+  if (!alertElem) return;
+  if (!msg) {
+    alertElem.style.display = 'none';
+    alertElem.textContent = '';
+    return;
+  }
+  alertElem.textContent = msg;
+  alertElem.style.display = 'block';
+}
+
+/**
+ * 3. Logout
+ */
+function initLogout() {
+  const logoutBtn = document.getElementById('admin-logout-btn');
+  if (!logoutBtn) return;
+
+  logoutBtn.addEventListener('click', async () => {
+    try {
+      await signOut(auth);
+    } catch (e) {
+      console.warn('Logout error:', e);
+    }
+    deactivateAdminDashboard();
+  });
+}
+
+/**
+ * 4. Dashboard Activation & Deactivation
+ */
+function activateAdminDashboard(email) {
   const loginView = document.getElementById('login-view');
   const dashboardView = document.getElementById('dashboard-view');
   const userBar = document.getElementById('admin-user-bar');
@@ -62,16 +195,10 @@ function activateAdminDashboard(email) {
   if (loginView) loginView.style.display = 'none';
   if (dashboardView) dashboardView.style.display = 'flex';
 
-  // Start live listeners for admin dashboard
   startAdminListeners();
 }
 
 function deactivateAdminDashboard() {
-  try {
-    localStorage.removeItem('abvp_admin_session');
-    localStorage.removeItem('abvp_admin_email');
-  } catch (e) {}
-
   const loginView = document.getElementById('login-view');
   const dashboardView = document.getElementById('dashboard-view');
   const userBar = document.getElementById('admin-user-bar');
@@ -81,496 +208,21 @@ function deactivateAdminDashboard() {
   if (loginView) loginView.style.display = 'flex';
 
   stopAdminListeners();
+  destroyCharts();
 }
 
 /**
- * 2. Auth State Observer
- */
-function initAuthObserver() {
-  // Check persistent session immediately on page load
-  try {
-    if (localStorage.getItem('abvp_admin_session') === 'true') {
-      const savedEmail = (localStorage.getItem('abvp_admin_email') || '').toLowerCase().trim();
-      if (savedEmail === ADMIN_EMAIL.toLowerCase()) {
-        activateAdminDashboard(savedEmail);
-      }
-    }
-  } catch (e) {}
-
-  onAuthStateChanged(auth, async (user) => {
-    currentUser = user;
-
-    if (user) {
-      const email = (user.email || '').toLowerCase().trim();
-      const isAdmin = email === ADMIN_EMAIL.toLowerCase();
-
-      if (isAdmin) {
-        activateAdminDashboard(user.email || ADMIN_EMAIL);
-      } else {
-        const loginAlert = document.getElementById('login-alert');
-        if (loginAlert) {
-          loginAlert.textContent = `Access denied. Signed in as ${user.email}, but only ${ADMIN_EMAIL} is authorized as Admin.`;
-          loginAlert.style.display = 'block';
-        }
-        deactivateAdminDashboard();
-        await signOut(auth);
-      }
-    } else {
-      // If user is null in Firebase Auth, check whether persistent admin session exists
-      try {
-        if (localStorage.getItem('abvp_admin_session') === 'true') {
-          const savedEmail = (localStorage.getItem('abvp_admin_email') || '').toLowerCase().trim();
-          if (savedEmail === ADMIN_EMAIL.toLowerCase()) {
-            activateAdminDashboard(savedEmail);
-            return;
-          }
-        }
-      } catch (e) {}
-
-      deactivateAdminDashboard();
-    }
-  });
-}
-
-/**
- * Login Screen Controller (Exclusive Google Login for harekrushnaputhal76@gmail.com)
- */
-function initLoginForm() {
-  const loginAlert = document.getElementById('login-alert');
-  const googleBtn = document.getElementById('admin-google-login-btn');
-
-  if (googleBtn) {
-    googleBtn.addEventListener('click', async () => {
-      showLoginAlert('');
-      setLoginSubmitting(true);
-
-      try {
-        // Fallback for file:// protocol where browsers block OAuth popup redirects
-        if (window.location.protocol === 'file:') {
-          const entered = window.prompt(
-            `Google OAuth requires HTTP/HTTPS server.\nRunning on local file:// protocol.\n\nTo verify Admin access, confirm your authorized Google email (${ADMIN_EMAIL}):`
-          );
-          if (!entered) {
-            setLoginSubmitting(false);
-            return;
-          }
-          if (entered.toLowerCase().trim() === ADMIN_EMAIL.toLowerCase()) {
-            activateAdminDashboard(ADMIN_EMAIL);
-            return;
-          } else {
-            showLoginAlert(`Access denied. "${entered}" is not authorized. Only ${ADMIN_EMAIL} can access this admin panel.`);
-            return;
-          }
-        }
-
-        const provider = new GoogleAuthProvider();
-        provider.setCustomParameters({ prompt: 'select_account' });
-        const cred = await signInWithPopup(auth, provider);
-        const user = cred.user;
-        const email = (user.email || '').toLowerCase().trim();
-
-        if (email === ADMIN_EMAIL.toLowerCase()) {
-          activateAdminDashboard(user.email);
-        } else {
-          showLoginAlert(`Access denied. Signed in as ${user.email}, but only ${ADMIN_EMAIL} is authorized.`);
-          await signOut(auth);
-        }
-      } catch (err) {
-        console.warn('Google admin sign-in error:', err);
-        if (err.code === 'auth/popup-closed-by-user') {
-          showLoginAlert('Sign-in popup was closed before completion. Please try again.');
-        } else if (err.code === 'auth/operation-not-allowed') {
-          showLoginAlert('Google Sign-in is not enabled in Firebase Console.');
-        } else if (err.code === 'auth/unauthorized-domain') {
-          showLoginAlert('This domain is not authorized in Firebase Console.');
-        } else if (err.code === 'auth/operation-not-supported-in-this-environment') {
-          const entered = window.prompt(
-            `Google popup is not supported in this local environment.\n\nEnter your authorized admin email (${ADMIN_EMAIL}) to proceed:`
-          );
-          if (entered && entered.toLowerCase().trim() === ADMIN_EMAIL.toLowerCase()) {
-            activateAdminDashboard(ADMIN_EMAIL);
-            return;
-          } else if (entered) {
-            showLoginAlert(`Access denied. "${entered}" is not authorized. Only ${ADMIN_EMAIL} is permitted.`);
-            return;
-          }
-        } else {
-          showLoginAlert('Sign-in error: ' + (err.message || err.code));
-        }
-      } finally {
-        setLoginSubmitting(false);
-      }
-    });
-  }
-
-  function setLoginSubmitting(isSubmitting) {
-    if (googleBtn) {
-      googleBtn.disabled = isSubmitting;
-      const btnText = googleBtn.querySelector('.btn-text');
-      const btnSpinner = googleBtn.querySelector('.btn-spinner');
-      if (btnText) {
-        btnText.textContent = isSubmitting ? 'Signing in with Google...' : 'Sign in with Google';
-      }
-      if (btnSpinner) {
-        btnSpinner.style.display = isSubmitting ? 'inline-block' : 'none';
-      }
-    }
-  }
-
-  function showLoginAlert(msg) {
-    if (!loginAlert) return;
-    if (!msg) {
-      loginAlert.style.display = 'none';
-      loginAlert.textContent = '';
-      return;
-    }
-    loginAlert.textContent = msg;
-    loginAlert.style.display = 'block';
-  }
-}
-
-/**
- * Logout Controller
- */
-function initLogout() {
-  const logoutBtn = document.getElementById('admin-logout-btn');
-  if (!logoutBtn) return;
-
-  logoutBtn.addEventListener('click', async () => {
-    try {
-      deactivateAdminDashboard();
-      await signOut(auth);
-    } catch (err) {
-      console.error('Sign out error:', err);
-    }
-  });
-}
-
-/**
- * Real-time Admin Listeners for Notices, Events, Volunteers, Members, Leaders, Chat
+ * 5. Start Real-Time Firestore Listeners
  */
 function startAdminListeners() {
-  // 1. Current Notices
-  const noticesList = document.getElementById('admin-notices-list');
-  const noticesBadge = document.getElementById('notices-count-badge');
-  try {
-    const qNotices = query(collection(db, 'notices'), orderBy('createdAt', 'desc'));
-    unsubNotices = onSnapshot(qNotices, (snapshot) => {
-      if (noticesBadge) noticesBadge.textContent = String(snapshot.size);
+  stopAdminListeners();
 
-      if (snapshot.empty) {
-        if (noticesList) {
-          noticesList.innerHTML = '<div class="empty-list-msg">No notices published yet.</div>';
-        }
-        return;
-      }
-
-      const items = [];
-      snapshot.forEach((docSnap) => {
-        const d = docSnap.data();
-        const id = docSnap.id;
-        const time = formatAdminTime(d.createdAt);
-
-        items.push(`
-          <div class="admin-list-item" id="notice-item-${id}">
-            <div class="item-content">
-              <h3 class="item-title">${escapeHtml(d.title || 'Untitled Notice')}</h3>
-              <div class="item-meta">
-                <span>Posted: ${time}</span>
-              </div>
-              <p class="item-body">${escapeHtml(d.message || '')}</p>
-            </div>
-            <button type="button" class="btn-delete" data-type="notice" data-id="${id}" aria-label="Delete notice">
-              Delete
-            </button>
-          </div>
-        `);
-      });
-
-      if (noticesList) {
-        noticesList.innerHTML = items.join('');
-        attachDeleteHandlers(noticesList, 'notices', 'Delete this notice?');
-      }
-    }, (err) => {
-      console.warn('Notices admin listener error:', err);
-      handleAccessDenied(err);
-    });
-  } catch (e) {
-    console.warn('Error setting notices listener:', e);
-  }
-
-  // 2. Current Events
-  const eventsList = document.getElementById('admin-events-list');
-  const eventsBadge = document.getElementById('events-count-badge');
-  try {
-    const qEvents = query(collection(db, 'events'), orderBy('date', 'asc'));
-    unsubEvents = onSnapshot(qEvents, (snapshot) => {
-      if (eventsBadge) eventsBadge.textContent = String(snapshot.size);
-
-      if (snapshot.empty) {
-        if (eventsList) {
-          eventsList.innerHTML = '<div class="empty-list-msg">No events scheduled yet.</div>';
-        }
-        return;
-      }
-
-      const items = [];
-      snapshot.forEach((docSnap) => {
-        const d = docSnap.data();
-        const id = docSnap.id;
-
-        items.push(`
-          <div class="admin-list-item" id="event-item-${id}">
-            <div class="item-content">
-              <h3 class="item-title">${escapeHtml(d.title || 'Untitled Event')}</h3>
-              <div class="item-meta">
-                <span>Date: ${escapeHtml(d.date || 'TBD')}</span>
-                <span>Location: ${escapeHtml(d.location || 'Khaira College')}</span>
-              </div>
-              <p class="item-body">${escapeHtml(d.description || '')}</p>
-            </div>
-            <button type="button" class="btn-delete" data-type="event" data-id="${id}" aria-label="Delete event">
-              Delete
-            </button>
-          </div>
-        `);
-      });
-
-      if (eventsList) {
-        eventsList.innerHTML = items.join('');
-        attachDeleteHandlers(eventsList, 'events', 'Delete this event?');
-      }
-    }, (err) => {
-      console.warn('Events admin listener error:', err);
-      handleAccessDenied(err);
-    });
-  } catch (e) {
-    console.warn('Error setting events listener:', e);
-  }
-
-  // 3. Volunteer Applications & Approvals
-  const volunteersTbody = document.getElementById('admin-volunteers-tbody');
-  const volunteersBadge = document.getElementById('volunteers-count-badge');
-  try {
-    const qVolunteers = query(collection(db, 'volunteers'), orderBy('createdAt', 'desc'));
-    unsubVolunteers = onSnapshot(qVolunteers, (snapshot) => {
-      if (volunteersBadge) volunteersBadge.textContent = String(snapshot.size);
-
-      if (snapshot.empty) {
-        if (volunteersTbody) {
-          volunteersTbody.innerHTML = '<tr><td colspan="9" class="empty-list-msg">No volunteer applications submitted yet.</td></tr>';
-        }
-        return;
-      }
-
-      let index = 1;
-      const rows = [];
-      snapshot.forEach((docSnap) => {
-        const d = docSnap.data();
-        const id = docSnap.id;
-        const status = d.status || 'pending';
-        let statusBadgeClass = 'status-pending';
-        if (status === 'approved') statusBadgeClass = 'status-approved';
-        if (status === 'rejected') statusBadgeClass = 'status-rejected';
-
-        rows.push(`
-          <tr id="volunteer-row-${id}">
-            <td>${index++}</td>
-            <td><strong>${escapeHtml(d.name || '-')}</strong></td>
-            <td>${escapeHtml(d.email || '-')}</td>
-            <td>${escapeHtml(d.class || '-')}</td>
-            <td><a href="tel:${escapeHtml(d.phone || '')}" style="color: var(--teal); font-weight: 500;">${escapeHtml(d.phone || '-')}</a></td>
-            <td>${escapeHtml(d.college || '-')}</td>
-            <td><div class="table-text-preview" title="${escapeHtml(d.why || '')}">${escapeHtml(d.why || '-')}</div></td>
-            <td><span class="status-pill ${statusBadgeClass}">${escapeHtml(status)}</span></td>
-            <td>
-              <div class="table-actions-cell">
-                <button type="button" class="btn-action btn-approve-vol" data-id="${id}" ${status === 'approved' ? 'disabled' : ''} aria-label="Approve volunteer application">
-                  Approve
-                </button>
-                <button type="button" class="btn-action btn-reject-vol" data-id="${id}" ${status === 'rejected' ? 'disabled' : ''} aria-label="Reject volunteer application">
-                  Reject
-                </button>
-              </div>
-            </td>
-          </tr>
-        `);
-      });
-
-      if (volunteersTbody) {
-        volunteersTbody.innerHTML = rows.join('');
-        attachVolunteerApprovalHandlers(volunteersTbody);
-      }
-    }, (err) => {
-      console.warn('Volunteers admin listener error:', err);
-      handleAccessDenied(err);
-    });
-  } catch (e) {
-    console.warn('Error setting volunteers listener:', e);
-  }
-
-  // 4. Registered Members List
-  const membersTbody = document.getElementById('admin-members-tbody');
-  const membersBadge = document.getElementById('members-count-badge');
-  try {
-    const qMembers = query(collection(db, 'members'), orderBy('createdAt', 'desc'));
-    unsubMembers = onSnapshot(qMembers, (snapshot) => {
-      if (membersBadge) membersBadge.textContent = String(snapshot.size);
-
-      if (snapshot.empty) {
-        if (membersTbody) {
-          membersTbody.innerHTML = '<tr><td colspan="5" class="empty-list-msg">No student members registered yet.</td></tr>';
-        }
-        return;
-      }
-
-      let index = 1;
-      const rows = [];
-      snapshot.forEach((docSnap) => {
-        const d = docSnap.data();
-        const id = docSnap.id;
-        const status = d.status || 'active';
-        const isBlocked = status === 'blocked';
-
-        rows.push(`
-          <tr id="member-row-${id}">
-            <td>${index++}</td>
-            <td><strong>${escapeHtml(d.name || 'Student')}</strong></td>
-            <td>${escapeHtml(d.email || '-')}</td>
-            <td><span class="status-pill ${isBlocked ? 'status-rejected' : 'status-approved'}">${escapeHtml(status)}</span></td>
-            <td>
-              <button type="button" class="btn-action btn-toggle-member" data-id="${id}" data-status="${status}" aria-label="Toggle member status">
-                ${isBlocked ? 'Activate' : 'Block'}
-              </button>
-            </td>
-          </tr>
-        `);
-      });
-
-      if (membersTbody) {
-        membersTbody.innerHTML = rows.join('');
-        attachMemberToggleHandlers(membersTbody);
-      }
-    }, (err) => {
-      console.warn('Members admin listener error:', err);
-      handleAccessDenied(err);
-    });
-  } catch (e) {
-    console.warn('Error setting members listener:', e);
-  }
-
-  // 5. Leader & Karyakarta Applications
-  const leadersTbody = document.getElementById('admin-leaders-tbody');
-  const leadersBadge = document.getElementById('leaders-count-badge');
-  try {
-    const qLeaders = query(collection(db, 'leaders'), orderBy('createdAt', 'desc'));
-    unsubLeaders = onSnapshot(qLeaders, (snapshot) => {
-      if (leadersBadge) leadersBadge.textContent = String(snapshot.size);
-
-      if (snapshot.empty) {
-        if (leadersTbody) {
-          leadersTbody.innerHTML = '<tr><td colspan="9" class="empty-list-msg">No leader applications submitted yet.</td></tr>';
-        }
-        return;
-      }
-
-      let index = 1;
-      const rows = [];
-      snapshot.forEach((docSnap) => {
-        const d = docSnap.data();
-        const id = docSnap.id;
-        const status = d.status || 'pending';
-        let statusBadgeClass = 'status-pending';
-        if (status === 'approved') statusBadgeClass = 'status-approved';
-        if (status === 'rejected') statusBadgeClass = 'status-rejected';
-
-        const name = d.name || d.fullName || '-';
-        const why = d.why || d.whyJoin || '-';
-
-        rows.push(`
-          <tr id="leader-row-${id}">
-            <td>${index++}</td>
-            <td><strong>${escapeHtml(name)}</strong></td>
-            <td><span class="status-pill status-pending" style="background: rgba(217,115,13,0.15); color: var(--saffron);">${escapeHtml(d.position || '-')}</span></td>
-            <td>${escapeHtml(d.class || '-')}</td>
-            <td><a href="tel:${escapeHtml(d.phone || '')}" style="color: var(--teal); font-weight: 500;">${escapeHtml(d.phone || '-')}</a></td>
-            <td>${escapeHtml(d.email || '-')}</td>
-            <td><div class="table-text-preview" title="${escapeHtml(why)}">${escapeHtml(why)}</div></td>
-            <td><span class="status-pill ${statusBadgeClass}">${escapeHtml(status)}</span></td>
-            <td>
-              <div class="table-actions-cell">
-                <button type="button" class="btn-action btn-approve-leader" data-id="${id}" ${status === 'approved' ? 'disabled' : ''} aria-label="Approve leader application">
-                  Approve
-                </button>
-                <button type="button" class="btn-action btn-reject-leader" data-id="${id}" ${status === 'rejected' ? 'disabled' : ''} aria-label="Reject leader application">
-                  Reject
-                </button>
-              </div>
-            </td>
-          </tr>
-        `);
-      });
-
-      if (leadersTbody) {
-        leadersTbody.innerHTML = rows.join('');
-        attachLeaderStatusHandlers(leadersTbody);
-      }
-    }, (err) => {
-      console.warn('Leaders admin listener error:', err);
-      handleAccessDenied(err);
-    });
-  } catch (e) {
-    console.warn('Error setting leaders listener:', e);
-  }
-
-  // 6. Volunteer Chat Moderation
-  const chatList = document.getElementById('admin-chat-list');
-  const chatBadge = document.getElementById('chat-count-badge');
-  try {
-    const qChat = query(collection(db, 'chat'), orderBy('createdAt', 'desc'), limitToLast(50));
-    unsubChat = onSnapshot(qChat, (snapshot) => {
-      if (chatBadge) chatBadge.textContent = String(snapshot.size);
-
-      if (snapshot.empty) {
-        if (chatList) {
-          chatList.innerHTML = '<div class="empty-list-msg">No chat messages yet.</div>';
-        }
-        return;
-      }
-
-      const items = [];
-      snapshot.forEach((docSnap) => {
-        const d = docSnap.data();
-        const id = docSnap.id;
-        const time = formatAdminTime(d.createdAt);
-
-        items.push(`
-          <div class="admin-list-item" id="chat-msg-${id}">
-            <div class="item-content">
-              <h3 class="item-title">${escapeHtml(d.name || 'Volunteer')}</h3>
-              <div class="item-meta">
-                <span>Sent: ${time}</span>
-              </div>
-              <p class="item-body">${escapeHtml(d.text || '')}</p>
-            </div>
-            <button type="button" class="btn-delete" data-type="chat" data-id="${id}" aria-label="Delete chat message">
-              Delete
-            </button>
-          </div>
-        `);
-      });
-
-      if (chatList) {
-        chatList.innerHTML = items.join('');
-        attachDeleteHandlers(chatList, 'chat', 'Delete this chat message?');
-      }
-    }, (err) => {
-      console.warn('Chat admin listener error:', err);
-      handleAccessDenied(err);
-    });
-  } catch (e) {
-    console.warn('Error setting chat listener:', e);
-  }
+  listenToNotices();
+  listenToEvents();
+  listenToVolunteers();
+  listenToMembers();
+  listenToLeaders();
+  listenToChat();
 }
 
 function stopAdminListeners() {
@@ -582,450 +234,968 @@ function stopAdminListeners() {
   if (unsubChat) { unsubChat(); unsubChat = null; }
 }
 
-function attachVolunteerApprovalHandlers(container) {
-  const approveBtns = container.querySelectorAll('.btn-approve-vol');
-  const rejectBtns = container.querySelectorAll('.btn-reject-vol');
-
-  approveBtns.forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      const id = btn.getAttribute('data-id');
-      if (!id) return;
-      btn.disabled = true;
-      try {
-        await updateDoc(doc(db, 'volunteers', id), { status: 'approved' });
-      } catch (err) {
-        console.error('Error approving volunteer:', err);
-        alert('Could not approve application. Check connection.');
-        btn.disabled = false;
-      }
-    });
-  });
-
-  rejectBtns.forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      const id = btn.getAttribute('data-id');
-      if (!id) return;
-      btn.disabled = true;
-      try {
-        await updateDoc(doc(db, 'volunteers', id), { status: 'rejected' });
-      } catch (err) {
-        console.error('Error rejecting volunteer:', err);
-        alert('Could not reject application. Check connection.');
-        btn.disabled = false;
-      }
-    });
-  });
-}
-
-function attachLeaderStatusHandlers(container) {
-  const approveBtns = container.querySelectorAll('.btn-approve-leader');
-  const rejectBtns = container.querySelectorAll('.btn-reject-leader');
-
-  approveBtns.forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      const id = btn.getAttribute('data-id');
-      if (!id) return;
-      btn.disabled = true;
-      try {
-        await updateDoc(doc(db, 'leaders', id), { status: 'approved' });
-      } catch (err) {
-        console.error('Error approving leader application:', err);
-        alert('Could not approve application. Check connection.');
-        btn.disabled = false;
-      }
-    });
-  });
-
-  rejectBtns.forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      const id = btn.getAttribute('data-id');
-      if (!id) return;
-      btn.disabled = true;
-      try {
-        await updateDoc(doc(db, 'leaders', id), { status: 'rejected' });
-      } catch (err) {
-        console.error('Error rejecting leader application:', err);
-        alert('Could not reject application. Check connection.');
-        btn.disabled = false;
-      }
-    });
-  });
-}
-
-function attachMemberToggleHandlers(container) {
-  const toggleBtns = container.querySelectorAll('.btn-toggle-member');
-  toggleBtns.forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      const id = btn.getAttribute('data-id');
-      const currentStatus = btn.getAttribute('data-status');
-      if (!id) return;
-
-      const newStatus = currentStatus === 'blocked' ? 'active' : 'blocked';
-      btn.disabled = true;
-      try {
-        await updateDoc(doc(db, 'members', id), { status: newStatus });
-      } catch (err) {
-        console.error('Error toggling member status:', err);
-        alert('Could not update member status. Check connection.');
-        btn.disabled = false;
-      }
-    });
-  });
-}
-
-function handleAccessDenied(err) {
-  if (err && (err.code === 'permission-denied' || err.code === 'permission_denied')) {
-    console.warn('Firestore permission denied:', err);
-    const notice = document.getElementById('admin-firestore-notice');
-    if (notice) {
-      notice.innerHTML = '<strong>Firestore Notice:</strong> Access was restricted by Firestore Security Rules. Ensure your rules in Firebase Console allow read/write.';
-      notice.style.display = 'block';
-    }
-  }
-}
-
 /**
- * Delete Confirmation Handler
+ * SECTION 1: Notices Collection
  */
-function attachDeleteHandlers(container, colName, promptMsg) {
-  const buttons = container.querySelectorAll('.btn-delete');
-  buttons.forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      const docId = btn.getAttribute('data-id');
-      if (!docId) return;
-
-      if (confirm(promptMsg)) {
-        btn.disabled = true;
-        btn.textContent = '...';
-        try {
-          await deleteDoc(doc(db, colName, docId));
-        } catch (err) {
-          console.error(`Error deleting document from ${colName}:`, err);
-          alert('Unable to delete item. Check your permissions and connection.');
-          btn.disabled = false;
-          btn.textContent = 'Delete';
-        }
-      }
-    });
-  });
-}
-
-/**
- * Delete All Items Controller
- */
-function initDeleteAllActions() {
-  const delAllNoticesBtn = document.getElementById('admin-delete-all-notices-btn');
-  const delAllEventsBtn = document.getElementById('admin-delete-all-events-btn');
-  const delAllChatBtn = document.getElementById('admin-delete-all-chat-btn');
-
-  if (delAllNoticesBtn) {
-    delAllNoticesBtn.addEventListener('click', () => {
-      deleteAllCollectionDocs('notices', 'Are you sure you want to delete ALL published notices? This cannot be undone.');
-    });
-  }
-
-  if (delAllEventsBtn) {
-    delAllEventsBtn.addEventListener('click', () => {
-      deleteAllCollectionDocs('events', 'Are you sure you want to delete ALL scheduled events? This cannot be undone.');
-    });
-  }
-
-  if (delAllChatBtn) {
-    delAllChatBtn.addEventListener('click', () => {
-      deleteAllCollectionDocs('chat', 'Are you sure you want to clear ALL chat messages? This cannot be undone.');
-    });
-  }
-}
-
-async function deleteAllCollectionDocs(colName, confirmMsg) {
-  if (!confirm(confirmMsg)) return;
+function listenToNotices() {
+  const listElem = document.getElementById('admin-notices-list');
+  const badgeElem = document.getElementById('notices-count-badge');
 
   try {
-    const snap = await getDocs(collection(db, colName));
-    if (snap.empty) {
-      alert(`No items found in ${colName} to delete.`);
-      return;
-    }
-    const promises = [];
-    snap.forEach((d) => {
-      promises.push(deleteDoc(doc(db, colName, d.id)));
+    const q = query(collection(db, 'notices'), orderBy('createdAt', 'desc'));
+    unsubNotices = onSnapshot(q, (snapshot) => {
+      renderNotices(snapshot.docs, listElem, badgeElem);
+    }, (err) => {
+      console.warn('Notices orderBy error, falling back to unordered listener:', err);
+      // Fallback in case index is creating
+      unsubNotices = onSnapshot(collection(db, 'notices'), (snapshot) => {
+        const sortedDocs = [...snapshot.docs].sort((a, b) => {
+          const tA = getDocTimestamp(a.data().createdAt);
+          const tB = getDocTimestamp(b.data().createdAt);
+          return tB - tA;
+        });
+        renderNotices(sortedDocs, listElem, badgeElem);
+      }, (e) => {
+        showFirestoreError('Failed to load notices: ' + e.message);
+      });
     });
-    await Promise.all(promises);
-    alert(`All ${colName} items have been deleted.`);
   } catch (err) {
-    console.error(`Error deleting all ${colName}:`, err);
-    alert(`Unable to delete all items. Check permissions.`);
+    showFirestoreError('Error setting notices listener: ' + err.message);
   }
 }
 
-/**
- * Post a Notice Form
- */
+function renderNotices(docs, container, badge) {
+  if (badge) badge.textContent = docs ? docs.length : 0;
+  if (!container) return;
+
+  if (!docs || docs.length === 0) {
+    container.innerHTML = '<div class="empty-list-msg">No records yet.</div>';
+    return;
+  }
+
+  container.innerHTML = docs.map((docSnap) => {
+    const data = docSnap.data();
+    const id = docSnap.id;
+    const title = escapeHtml(data.title || 'Untitled Notice');
+    const message = escapeHtml(data.message || '');
+    const dateFormatted = formatTimestamp(data.createdAt);
+
+    return `
+      <div class="admin-list-item" data-id="${id}">
+        <div class="item-content">
+          <h3 class="item-title">${title}</h3>
+          <p class="item-meta">${dateFormatted}</p>
+          <p class="item-desc">${message}</p>
+        </div>
+        <div class="item-actions">
+          <button type="button" class="btn-delete btn-delete-notice" data-id="${id}" title="Delete notice">
+            Delete
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Attach delete handlers
+  container.querySelectorAll('.btn-delete-notice').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      const id = e.currentTarget.getAttribute('data-id');
+      if (!id) return;
+      if (!confirm('Are you sure you want to delete this notice?')) return;
+      try {
+        await deleteDoc(doc(db, 'notices', id));
+      } catch (err) {
+        alert('Failed to delete notice: ' + err.message);
+      }
+    });
+  });
+}
+
 function initNoticePostForm() {
   const form = document.getElementById('post-notice-form');
   const titleInput = document.getElementById('notice-title');
-  const msgInput = document.getElementById('notice-message');
-  const alertBox = document.getElementById('notice-form-alert');
+  const messageInput = document.getElementById('notice-message');
   const submitBtn = document.getElementById('notice-submit-btn');
+  const alertElem = document.getElementById('notice-form-alert');
 
   if (!form) return;
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (alertElem) { alertElem.style.display = 'none'; alertElem.textContent = ''; }
 
     const title = titleInput ? titleInput.value.trim() : '';
-    const message = msgInput ? msgInput.value.trim() : '';
+    const message = messageInput ? messageInput.value.trim() : '';
 
     if (!title || !message) {
-      showFormAlert(alertBox, 'Title and message are both required.', false);
+      showFormAlert(alertElem, 'Please provide both notice title and message.', true);
       return;
     }
 
-    if (title.length > 100) {
-      showFormAlert(alertBox, 'Title cannot exceed 100 characters.', false);
-      return;
-    }
-
-    if (message.length > 500) {
-      showFormAlert(alertBox, 'Message cannot exceed 500 characters.', false);
-      return;
-    }
-
-    submitBtn.disabled = true;
-    showFormAlert(alertBox, '');
+    setBtnLoading(submitBtn, true, 'Publishing...');
 
     try {
       await addDoc(collection(db, 'notices'), {
         title,
         message,
-        createdAt: serverTimestamp(),
-        createdBy: currentUser ? currentUser.uid : 'admin'
+        createdAt: serverTimestamp()
       });
 
-      showFormAlert(alertBox, 'Notice published successfully!', true);
       form.reset();
+      showFormAlert(alertElem, 'Notice published successfully to public website!', false);
     } catch (err) {
-      console.error('Error publishing notice:', err);
-      showFormAlert(alertBox, 'Failed to publish notice. Check your permissions.', false);
+      console.warn('Error publishing notice:', err);
+      showFormAlert(alertElem, 'Failed to publish notice: ' + err.message, true);
     } finally {
-      submitBtn.disabled = false;
+      setBtnLoading(submitBtn, false, 'Publish Notice');
     }
   });
 }
 
 /**
- * Add Event Form
+ * SECTION 2: Events Collection
  */
+function listenToEvents() {
+  const listElem = document.getElementById('admin-events-list');
+  const badgeElem = document.getElementById('events-count-badge');
+
+  try {
+    const q = query(collection(db, 'events'), orderBy('date', 'asc'));
+    unsubEvents = onSnapshot(q, (snapshot) => {
+      renderEvents(snapshot.docs, listElem, badgeElem);
+    }, (err) => {
+      console.warn('Events query fallback:', err);
+      unsubEvents = onSnapshot(collection(db, 'events'), (snapshot) => {
+        const sortedDocs = [...snapshot.docs].sort((a, b) => {
+          const dA = a.data().date || '';
+          const dB = b.data().date || '';
+          return dA.localeCompare(dB);
+        });
+        renderEvents(sortedDocs, listElem, badgeElem);
+      }, (e) => {
+        showFirestoreError('Failed to load events: ' + e.message);
+      });
+    });
+  } catch (err) {
+    showFirestoreError('Error setting events listener: ' + err.message);
+  }
+}
+
+function renderEvents(docs, container, badge) {
+  if (badge) badge.textContent = docs ? docs.length : 0;
+  if (!container) return;
+
+  if (!docs || docs.length === 0) {
+    container.innerHTML = '<div class="empty-list-msg">No records yet.</div>';
+    return;
+  }
+
+  container.innerHTML = docs.map((docSnap) => {
+    const data = docSnap.data();
+    const id = docSnap.id;
+    const title = escapeHtml(data.title || 'Untitled Event');
+    const date = escapeHtml(data.date || 'TBA');
+    const location = escapeHtml(data.location || 'Khaira');
+    const description = escapeHtml(data.description || '');
+
+    return `
+      <div class="admin-list-item" data-id="${id}">
+        <div class="item-content">
+          <h3 class="item-title">${title}</h3>
+          <p class="item-meta">Date: ${date} &bull; Location: ${location}</p>
+          <p class="item-desc">${description}</p>
+        </div>
+        <div class="item-actions">
+          <button type="button" class="btn-delete btn-delete-event" data-id="${id}" title="Delete event">
+            Delete
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  container.querySelectorAll('.btn-delete-event').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      const id = e.currentTarget.getAttribute('data-id');
+      if (!id) return;
+      if (!confirm('Are you sure you want to delete this event?')) return;
+      try {
+        await deleteDoc(doc(db, 'events', id));
+      } catch (err) {
+        alert('Failed to delete event: ' + err.message);
+      }
+    });
+  });
+}
+
 function initEventPostForm() {
   const form = document.getElementById('add-event-form');
   const titleInput = document.getElementById('event-title');
   const dateInput = document.getElementById('event-date');
-  const locInput = document.getElementById('event-location');
+  const locationInput = document.getElementById('event-location');
   const descInput = document.getElementById('event-description');
-  const alertBox = document.getElementById('event-form-alert');
   const submitBtn = document.getElementById('event-submit-btn');
+  const alertElem = document.getElementById('event-form-alert');
 
   if (!form) return;
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (alertElem) { alertElem.style.display = 'none'; alertElem.textContent = ''; }
 
     const title = titleInput ? titleInput.value.trim() : '';
     const date = dateInput ? dateInput.value.trim() : '';
-    const location = locInput ? locInput.value.trim() : '';
+    const location = locationInput ? locationInput.value.trim() : '';
     const description = descInput ? descInput.value.trim() : '';
 
     if (!title || !date || !location || !description) {
-      showFormAlert(alertBox, 'All fields are required to add an event.', false);
+      showFormAlert(alertElem, 'Please fill in all required event details.', true);
       return;
     }
 
-    submitBtn.disabled = true;
-    showFormAlert(alertBox, '');
+    setBtnLoading(submitBtn, true, 'Scheduling...');
 
     try {
       await addDoc(collection(db, 'events'), {
         title,
-        date, // Stored as "YYYY-MM-DD" string
+        date,
         location,
         description,
         createdAt: serverTimestamp()
       });
 
-      showFormAlert(alertBox, 'Event added successfully!', true);
       form.reset();
+      showFormAlert(alertElem, 'Event scheduled successfully!', false);
     } catch (err) {
-      console.error('Error adding event:', err);
-      showFormAlert(alertBox, 'Failed to add event. Check your permissions.', false);
+      console.warn('Error scheduling event:', err);
+      showFormAlert(alertElem, 'Failed to schedule event: ' + err.message, true);
     } finally {
-      submitBtn.disabled = false;
+      setBtnLoading(submitBtn, false, 'Add Event');
     }
   });
 }
 
-function showFormAlert(alertElem, msg, isSuccess) {
-  if (!alertElem) return;
-  if (!msg) {
-    alertElem.style.display = 'none';
-    alertElem.textContent = '';
-    return;
+/**
+ * SECTION 3: Volunteers Collection (Table + Status Updates + Charts 1 & 4)
+ */
+function listenToVolunteers() {
+  const tbody = document.getElementById('admin-volunteers-tbody');
+  const badgeElem = document.getElementById('volunteers-count-badge');
+
+  try {
+    unsubVolunteers = onSnapshot(collection(db, 'volunteers'), (snapshot) => {
+      const docs = snapshot.docs;
+      if (badgeElem) badgeElem.textContent = docs ? docs.length : 0;
+
+      // Update Chart 1 (status distribution) & Chart 4 (timeline)
+      updateVolunteersChart(docs);
+      updateTimelineChart(docs);
+
+      if (!tbody) return;
+
+      if (!docs || docs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" class="empty-list-msg">No records yet.</td></tr>';
+        return;
+      }
+
+      // Sort newest first
+      const sortedDocs = [...docs].sort((a, b) => {
+        const tA = getDocTimestamp(a.data().createdAt);
+        const tB = getDocTimestamp(b.data().createdAt);
+        return tB - tA;
+      });
+
+      tbody.innerHTML = sortedDocs.map((docSnap, index) => {
+        const data = docSnap.data();
+        const id = docSnap.id;
+        const name = escapeHtml(data.name || 'Anonymous');
+        const email = escapeHtml(data.email || '—');
+        const className = escapeHtml(data.class || data.studentClass || '—');
+        const phone = escapeHtml(data.phone || '—');
+        const college = escapeHtml(data.college || 'Khaira College');
+        const why = escapeHtml(data.why || data.reason || '—');
+        const status = (data.status || 'pending').toLowerCase();
+        const createdAt = formatTimestamp(data.createdAt);
+
+        let statusBadgeClass = 'status-pending';
+        if (status === 'approved') statusBadgeClass = 'status-approved';
+        if (status === 'rejected') statusBadgeClass = 'status-rejected';
+
+        return `
+          <tr data-id="${id}">
+            <td>${index + 1}</td>
+            <td><strong>${name}</strong></td>
+            <td>${email}</td>
+            <td>${className}</td>
+            <td>${phone}</td>
+            <td>${college}</td>
+            <td style="max-width: 200px; white-space: normal; word-break: break-word;">${why}</td>
+            <td><span class="status-badge ${statusBadgeClass}">${escapeHtml(status)}</span></td>
+            <td>${createdAt}</td>
+            <td>
+              <div style="display: flex; gap: 0.35rem;">
+                <button type="button" class="btn-action btn-approve-vol" data-id="${id}" ${status === 'approved' ? 'disabled' : ''}>
+                  Approve
+                </button>
+                <button type="button" class="btn-action btn-reject-vol" data-id="${id}" ${status === 'rejected' ? 'disabled' : ''}>
+                  Reject
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      // Actions
+      tbody.querySelectorAll('.btn-approve-vol').forEach((btn) => {
+        btn.addEventListener('click', async (e) => {
+          const id = e.currentTarget.getAttribute('data-id');
+          if (!id) return;
+          try {
+            await updateDoc(doc(db, 'volunteers', id), { status: 'approved' });
+          } catch (err) {
+            alert('Failed to approve volunteer: ' + err.message);
+          }
+        });
+      });
+
+      tbody.querySelectorAll('.btn-reject-vol').forEach((btn) => {
+        btn.addEventListener('click', async (e) => {
+          const id = e.currentTarget.getAttribute('data-id');
+          if (!id) return;
+          try {
+            await updateDoc(doc(db, 'volunteers', id), { status: 'rejected' });
+          } catch (err) {
+            alert('Failed to reject volunteer: ' + err.message);
+          }
+        });
+      });
+    }, (err) => {
+      showFirestoreError('Failed to load volunteers: ' + err.message);
+    });
+  } catch (err) {
+    showFirestoreError('Error setting volunteers listener: ' + err.message);
   }
-  alertElem.textContent = msg;
-  alertElem.className = `form-alert ${isSuccess ? 'success' : 'error'}`;
-  alertElem.style.display = 'block';
 }
 
-function formatAdminTime(ts) {
-  if (!ts) return 'Just now';
-  let date;
-  if (typeof ts.toDate === 'function') date = ts.toDate();
-  else if (ts.seconds) date = new Date(ts.seconds * 1000);
-  else date = new Date(ts);
+/**
+ * SECTION 4: Members Collection (Table + Status Toggle + Chart 2)
+ */
+function listenToMembers() {
+  const tbody = document.getElementById('admin-members-tbody');
+  const badgeElem = document.getElementById('members-count-badge');
 
-  if (isNaN(date.getTime())) return 'Just now';
+  try {
+    unsubMembers = onSnapshot(collection(db, 'members'), (snapshot) => {
+      const docs = snapshot.docs;
+      if (badgeElem) badgeElem.textContent = docs ? docs.length : 0;
 
-  const day = date.getDate();
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const month = months[date.getMonth()];
-  const year = date.getFullYear();
-  let hours = date.getHours();
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  const ampm = hours >= 12 ? 'PM' : 'AM';
-  hours = hours % 12 || 12;
+      // Update Chart 2 (members status)
+      updateMembersChart(docs);
 
-  return `${day} ${month} ${year}, ${hours}:${minutes} ${ampm}`;
+      if (!tbody) return;
+
+      if (!docs || docs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-list-msg">No records yet.</td></tr>';
+        return;
+      }
+
+      const sortedDocs = [...docs].sort((a, b) => {
+        const tA = getDocTimestamp(a.data().createdAt);
+        const tB = getDocTimestamp(b.data().createdAt);
+        return tB - tA;
+      });
+
+      tbody.innerHTML = sortedDocs.map((docSnap, index) => {
+        const data = docSnap.data();
+        const id = docSnap.id;
+        const name = escapeHtml(data.name || data.displayName || 'Member');
+        const email = escapeHtml(data.email || '—');
+        const status = (data.status || 'active').toLowerCase();
+        const createdAt = formatTimestamp(data.createdAt);
+
+        const isBlocked = status === 'blocked';
+        const badgeClass = isBlocked ? 'status-blocked' : 'status-active';
+        const toggleActionText = isBlocked ? 'Activate' : 'Block';
+        const targetStatus = isBlocked ? 'active' : 'blocked';
+
+        return `
+          <tr data-id="${id}">
+            <td>${index + 1}</td>
+            <td><strong>${name}</strong></td>
+            <td>${email}</td>
+            <td><span class="status-badge ${badgeClass}">${isBlocked ? 'Blocked' : 'Active'}</span></td>
+            <td>${createdAt}</td>
+            <td>
+              <button type="button" class="btn-action btn-toggle-member ${isBlocked ? 'btn-approve-vol' : 'btn-reject-vol'}" data-id="${id}" data-target-status="${targetStatus}">
+                ${toggleActionText}
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      tbody.querySelectorAll('.btn-toggle-member').forEach((btn) => {
+        btn.addEventListener('click', async (e) => {
+          const id = e.currentTarget.getAttribute('data-id');
+          const targetStatus = e.currentTarget.getAttribute('data-target-status');
+          if (!id || !targetStatus) return;
+          try {
+            await updateDoc(doc(db, 'members', id), { status: targetStatus });
+          } catch (err) {
+            alert('Failed to update member status: ' + err.message);
+          }
+        });
+      });
+    }, (err) => {
+      showFirestoreError('Failed to load members: ' + err.message);
+    });
+  } catch (err) {
+    showFirestoreError('Error setting members listener: ' + err.message);
+  }
+}
+
+/**
+ * SECTION 5: Leaders Collection (Table + Status Updates + Chart 3)
+ */
+function listenToLeaders() {
+  const tbody = document.getElementById('admin-leaders-tbody');
+  const badgeElem = document.getElementById('leaders-count-badge');
+
+  try {
+    unsubLeaders = onSnapshot(collection(db, 'leaders'), (snapshot) => {
+      const docs = snapshot.docs;
+      if (badgeElem) badgeElem.textContent = docs ? docs.length : 0;
+
+      // Update Chart 3 (leaders by position)
+      updateLeadersChart(docs);
+
+      if (!tbody) return;
+
+      if (!docs || docs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="empty-list-msg">No records yet.</td></tr>';
+        return;
+      }
+
+      const sortedDocs = [...docs].sort((a, b) => {
+        const tA = getDocTimestamp(a.data().createdAt);
+        const tB = getDocTimestamp(b.data().createdAt);
+        return tB - tA;
+      });
+
+      tbody.innerHTML = sortedDocs.map((docSnap, index) => {
+        const data = docSnap.data();
+        const id = docSnap.id;
+        const name = escapeHtml(data.name || 'Anonymous');
+        const position = escapeHtml(data.position || 'General');
+        const className = escapeHtml(data.class || data.studentClass || '—');
+        const phone = escapeHtml(data.phone || '—');
+        const email = escapeHtml(data.email || '—');
+        const why = escapeHtml(data.why || data.motivation || '—');
+        const status = (data.status || 'pending').toLowerCase();
+
+        let badgeClass = 'status-pending';
+        if (status === 'approved') badgeClass = 'status-approved';
+        if (status === 'rejected') badgeClass = 'status-rejected';
+
+        return `
+          <tr data-id="${id}">
+            <td>${index + 1}</td>
+            <td><strong>${name}</strong></td>
+            <td><span class="role-badge" style="font-weight: 600;">${position}</span></td>
+            <td>${className}</td>
+            <td>${phone}</td>
+            <td>${email}</td>
+            <td style="max-width: 200px; white-space: normal; word-break: break-word;">${why}</td>
+            <td><span class="status-badge ${badgeClass}">${escapeHtml(status)}</span></td>
+            <td>
+              <div style="display: flex; gap: 0.35rem;">
+                <button type="button" class="btn-action btn-approve-leader btn-approve-vol" data-id="${id}" ${status === 'approved' ? 'disabled' : ''}>
+                  Approve
+                </button>
+                <button type="button" class="btn-action btn-reject-leader btn-reject-vol" data-id="${id}" ${status === 'rejected' ? 'disabled' : ''}>
+                  Reject
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      tbody.querySelectorAll('.btn-approve-leader').forEach((btn) => {
+        btn.addEventListener('click', async (e) => {
+          const id = e.currentTarget.getAttribute('data-id');
+          if (!id) return;
+          try {
+            await updateDoc(doc(db, 'leaders', id), { status: 'approved' });
+          } catch (err) {
+            alert('Failed to approve leader: ' + err.message);
+          }
+        });
+      });
+
+      tbody.querySelectorAll('.btn-reject-leader').forEach((btn) => {
+        btn.addEventListener('click', async (e) => {
+          const id = e.currentTarget.getAttribute('data-id');
+          if (!id) return;
+          try {
+            await updateDoc(doc(db, 'leaders', id), { status: 'rejected' });
+          } catch (err) {
+            alert('Failed to reject leader: ' + err.message);
+          }
+        });
+      });
+    }, (err) => {
+      showFirestoreError('Failed to load leaders: ' + err.message);
+    });
+  } catch (err) {
+    showFirestoreError('Error setting leaders listener: ' + err.message);
+  }
+}
+
+/**
+ * SECTION 6: Volunteer Chat Moderation (Last 50 Messages)
+ */
+function listenToChat() {
+  const listElem = document.getElementById('admin-chat-list');
+  const badgeElem = document.getElementById('chat-count-badge');
+
+  try {
+    const q = query(collection(db, 'chat'), orderBy('createdAt', 'desc'), limit(50));
+    unsubChat = onSnapshot(q, (snapshot) => {
+      renderChat(snapshot.docs, listElem, badgeElem);
+    }, (err) => {
+      console.warn('Chat query fallback:', err);
+      // Fallback query without orderBy if index is missing
+      const fallbackQuery = query(collection(db, 'chat'), limit(50));
+      unsubChat = onSnapshot(fallbackQuery, (snapshot) => {
+        const sortedDocs = [...snapshot.docs].sort((a, b) => {
+          const tA = getDocTimestamp(a.data().createdAt);
+          const tB = getDocTimestamp(b.data().createdAt);
+          return tB - tA;
+        });
+        renderChat(sortedDocs, listElem, badgeElem);
+      }, (e) => {
+        showFirestoreError('Failed to load chat: ' + e.message);
+      });
+    });
+  } catch (err) {
+    showFirestoreError('Error setting chat listener: ' + err.message);
+  }
+}
+
+function renderChat(docs, container, badge) {
+  if (badge) badge.textContent = docs ? docs.length : 0;
+  if (!container) return;
+
+  if (!docs || docs.length === 0) {
+    container.innerHTML = '<div class="empty-list-msg">No records yet.</div>';
+    return;
+  }
+
+  container.innerHTML = docs.map((docSnap) => {
+    const data = docSnap.data();
+    const id = docSnap.id;
+    const name = escapeHtml(data.name || data.userName || 'Anonymous Karyakarta');
+    const text = escapeHtml(data.text || data.message || '');
+    const timeFormatted = formatTimestamp(data.createdAt);
+
+    return `
+      <div class="admin-list-item" data-id="${id}">
+        <div class="item-content">
+          <h3 class="item-title">${name}</h3>
+          <p class="item-meta">${timeFormatted}</p>
+          <p class="item-desc" style="white-space: pre-wrap;">${text}</p>
+        </div>
+        <div class="item-actions">
+          <button type="button" class="btn-delete btn-delete-chat" data-id="${id}" title="Delete message">
+            Delete
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  container.querySelectorAll('.btn-delete-chat').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      const id = e.currentTarget.getAttribute('data-id');
+      if (!id) return;
+      if (!confirm('Are you sure you want to delete this chat message?')) return;
+      try {
+        await deleteDoc(doc(db, 'chat', id));
+      } catch (err) {
+        alert('Failed to delete chat message: ' + err.message);
+      }
+    });
+  });
+}
+
+/**
+ * =========================================================================
+ * STEP 3: REAL-TIME CHARTS (Chart.js with actual Firestore document counts)
+ * Colors: Saffron #D9730D, Maroon #6B1E1E, Navy #0F172A, Teal #2F6F62
+ * =========================================================================
+ */
+
+/**
+ * Chart 1 (bar): Volunteers by status (pending, approved, rejected)
+ */
+function updateVolunteersChart(docs) {
+  const canvas = document.getElementById('chart-volunteers');
+  if (!canvas || typeof Chart === 'undefined') return;
+
+  let pending = 0;
+  let approved = 0;
+  let rejected = 0;
+
+  if (docs && docs.length > 0) {
+    docs.forEach((d) => {
+      const s = (d.data().status || 'pending').toLowerCase();
+      if (s === 'approved') approved++;
+      else if (s === 'rejected') rejected++;
+      else pending++;
+    });
+  }
+
+  const labels = ['Pending', 'Approved', 'Rejected'];
+  const data = [pending, approved, rejected];
+  const total = pending + approved + rejected;
+
+  if (chartVolunteers) {
+    chartVolunteers.data.labels = labels;
+    chartVolunteers.data.datasets[0].data = data;
+    chartVolunteers.options.plugins.title.text = total === 0 ? 'No data yet.' : `Total Applications: ${total}`;
+    chartVolunteers.update();
+  } else {
+    const ctx = canvas.getContext('2d');
+    chartVolunteers = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Volunteers',
+          data: data,
+          backgroundColor: [CHART_COLORS.saffron, CHART_COLORS.teal, CHART_COLORS.maroon],
+          borderColor: [CHART_COLORS.saffron, CHART_COLORS.teal, CHART_COLORS.maroon],
+          borderWidth: 1,
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          title: {
+            display: true,
+            text: total === 0 ? 'No data yet.' : `Total Applications: ${total}`,
+            font: { family: 'Cinzel, Georgia, serif', size: 12 }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { precision: 0 }
+          }
+        }
+      }
+    });
+  }
+}
+
+/**
+ * Chart 2 (doughnut): Members by status (active, blocked)
+ */
+function updateMembersChart(docs) {
+  const canvas = document.getElementById('chart-members');
+  if (!canvas || typeof Chart === 'undefined') return;
+
+  let active = 0;
+  let blocked = 0;
+
+  if (docs && docs.length > 0) {
+    docs.forEach((d) => {
+      const s = (d.data().status || 'active').toLowerCase();
+      if (s === 'blocked') blocked++;
+      else active++;
+    });
+  }
+
+  const total = active + blocked;
+  const labels = ['Active', 'Blocked'];
+  const data = total === 0 ? [0, 0] : [active, blocked];
+
+  if (chartMembers) {
+    chartMembers.data.labels = labels;
+    chartMembers.data.datasets[0].data = data;
+    chartMembers.options.plugins.title.text = total === 0 ? 'No data yet.' : `Registered Members: ${total}`;
+    chartMembers.update();
+  } else {
+    const ctx = canvas.getContext('2d');
+    chartMembers = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: data,
+          backgroundColor: [CHART_COLORS.teal, CHART_COLORS.maroon],
+          borderWidth: 2,
+          borderColor: '#FFFFFF'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { boxWidth: 12, font: { family: 'Cabin, sans-serif' } }
+          },
+          title: {
+            display: true,
+            text: total === 0 ? 'No data yet.' : `Registered Members: ${total}`,
+            font: { family: 'Cinzel, Georgia, serif', size: 12 }
+          }
+        }
+      }
+    });
+  }
+}
+
+/**
+ * Chart 3 (bar): Leaders by position
+ */
+function updateLeadersChart(docs) {
+  const canvas = document.getElementById('chart-leaders');
+  if (!canvas || typeof Chart === 'undefined') return;
+
+  const positionCounts = {};
+  let total = 0;
+
+  if (docs && docs.length > 0) {
+    docs.forEach((d) => {
+      total++;
+      const pos = (d.data().position || 'General').trim();
+      positionCounts[pos] = (positionCounts[pos] || 0) + 1;
+    });
+  }
+
+  let labels = Object.keys(positionCounts);
+  let data = Object.values(positionCounts);
+
+  if (labels.length === 0) {
+    labels = ['No data yet'];
+    data = [0];
+  }
+
+  const backgroundColors = labels.map((_, i) => {
+    const palette = [CHART_COLORS.saffron, CHART_COLORS.maroon, CHART_COLORS.teal, CHART_COLORS.navy];
+    return palette[i % palette.length];
+  });
+
+  if (chartLeaders) {
+    chartLeaders.data.labels = labels;
+    chartLeaders.data.datasets[0].data = data;
+    chartLeaders.data.datasets[0].backgroundColor = backgroundColors;
+    chartLeaders.options.plugins.title.text = total === 0 ? 'No data yet.' : `Leader Applicants: ${total}`;
+    chartLeaders.update();
+  } else {
+    const ctx = canvas.getContext('2d');
+    chartLeaders = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Applications',
+          data: data,
+          backgroundColor: backgroundColors,
+          borderWidth: 1,
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          title: {
+            display: true,
+            text: total === 0 ? 'No data yet.' : `Leader Applicants: ${total}`,
+            font: { family: 'Cinzel, Georgia, serif', size: 12 }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { precision: 0 }
+          }
+        }
+      }
+    });
+  }
+}
+
+/**
+ * Chart 4 (bar / line): New volunteers per day, using createdAt grouped by date
+ */
+function updateTimelineChart(docs) {
+  const canvas = document.getElementById('chart-volunteers-timeline');
+  if (!canvas || typeof Chart === 'undefined') return;
+
+  const dateMap = {};
+  let total = 0;
+
+  if (docs && docs.length > 0) {
+    docs.forEach((d) => {
+      const dateStr = extractIsoDate(d.data().createdAt);
+      if (dateStr) {
+        total++;
+        dateMap[dateStr] = (dateMap[dateStr] || 0) + 1;
+      }
+    });
+  }
+
+  const sortedDates = Object.keys(dateMap).sort();
+  let labels = sortedDates;
+  let data = sortedDates.map((date) => dateMap[date]);
+
+  if (labels.length === 0) {
+    labels = ['No data yet'];
+    data = [0];
+  }
+
+  if (chartTimeline) {
+    chartTimeline.data.labels = labels;
+    chartTimeline.data.datasets[0].data = data;
+    chartTimeline.options.plugins.title.text = total === 0 ? 'No data yet.' : `Submissions Logged: ${total}`;
+    chartTimeline.update();
+  } else {
+    const ctx = canvas.getContext('2d');
+    chartTimeline = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'New Volunteers',
+          data: data,
+          borderColor: CHART_COLORS.saffron,
+          backgroundColor: 'rgba(217, 115, 13, 0.15)',
+          fill: true,
+          tension: 0.3,
+          pointBackgroundColor: CHART_COLORS.maroon,
+          pointRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          title: {
+            display: true,
+            text: total === 0 ? 'No data yet.' : `Submissions Logged: ${total}`,
+            font: { family: 'Cinzel, Georgia, serif', size: 12 }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { precision: 0 }
+          }
+        }
+      }
+    });
+  }
+}
+
+function destroyCharts() {
+  if (chartVolunteers) { chartVolunteers.destroy(); chartVolunteers = null; }
+  if (chartMembers) { chartMembers.destroy(); chartMembers = null; }
+  if (chartLeaders) { chartLeaders.destroy(); chartLeaders = null; }
+  if (chartTimeline) { chartTimeline.destroy(); chartTimeline = null; }
+}
+
+/**
+ * =========================================================================
+ * UTILITY HELPERS
+ * =========================================================================
+ */
+function setBtnLoading(btn, isLoading, defaultText) {
+  if (!btn) return;
+  btn.disabled = isLoading;
+  const textElem = btn.querySelector('.btn-text');
+  const spinnerElem = btn.querySelector('.btn-spinner');
+  if (textElem) textElem.textContent = defaultText;
+  if (spinnerElem) spinnerElem.style.display = isLoading ? 'inline-block' : 'none';
+}
+
+function showFormAlert(alertElem, msg, isError) {
+  if (!alertElem) return;
+  alertElem.textContent = msg;
+  alertElem.className = `form-alert ${isError ? 'error' : 'success'}`;
+  alertElem.style.display = 'block';
+  setTimeout(() => {
+    if (alertElem) alertElem.style.display = 'none';
+  }, 6000);
+}
+
+function showFirestoreError(msg) {
+  console.warn('Firestore warning:', msg);
+  const noticeElem = document.getElementById('admin-firestore-notice');
+  if (!noticeElem) return;
+  noticeElem.textContent = msg;
+  noticeElem.style.display = 'block';
+}
+
+function formatTimestamp(val) {
+  if (!val) return '—';
+  try {
+    if (typeof val.toDate === 'function') {
+      return val.toDate().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+    }
+    if (typeof val.seconds === 'number') {
+      return new Date(val.seconds * 1000).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+    }
+    const d = new Date(val);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+    }
+  } catch (e) {}
+  return String(val);
+}
+
+function extractIsoDate(val) {
+  if (!val) return null;
+  try {
+    let d = null;
+    if (typeof val.toDate === 'function') {
+      d = val.toDate();
+    } else if (typeof val.seconds === 'number') {
+      d = new Date(val.seconds * 1000);
+    } else {
+      const parsed = new Date(val);
+      if (!isNaN(parsed.getTime())) d = parsed;
+    }
+    if (d) {
+      return d.toISOString().split('T')[0];
+    }
+  } catch (e) {}
+  return null;
+}
+
+function getDocTimestamp(val) {
+  if (!val) return 0;
+  if (typeof val.toMillis === 'function') return val.toMillis();
+  if (typeof val.seconds === 'number') return val.seconds * 1000;
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? 0 : d.getTime();
 }
 
 function escapeHtml(str) {
-  if (!str) return '';
-  return String(str)
+  return String(str || '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
-}
-
-/**
- * One-Click Official ABVP Khaira Data Seeder
- */
-function initSeedDataAction() {
-  const seedBtn = document.getElementById('admin-seed-data-btn');
-  const alertBox = document.getElementById('seed-data-alert');
-  if (!seedBtn) return;
-
-  seedBtn.addEventListener('click', async () => {
-    if (!confirm('Seed official ABVP Khaira Notices, Events, and Leaders into Cloud Firestore?')) {
-      return;
-    }
-
-    seedBtn.disabled = true;
-    seedBtn.textContent = 'Seeding Data...';
-    if (alertBox) alertBox.style.display = 'none';
-
-    try {
-      // 1. Official Campaign Notices
-      const notices = [
-        {
-          title: 'Khaira College Student Union Election on 15 Oct 2026',
-          message: 'All students of Khaira College are requested to support and vote for ABVP candidates for President & General Secretary. Struggle, Service, Leadership!',
-          createdAt: serverTimestamp()
-        },
-        {
-          title: 'Mega Campus Karyakarta Assembly & Unity Meet',
-          message: 'Campus assembly regarding college infrastructure, lab upgrades, library modernization, and student charter demands at college grounds.',
-          createdAt: serverTimestamp()
-        },
-        {
-          title: 'Mission Sahasi: Self-Defense Training Workshop',
-          message: 'Free self-defense and martial arts empowerment program for all girl students of Khaira College. Registration open at the student union desk.',
-          createdAt: serverTimestamp()
-        }
-      ];
-
-      for (const notice of notices) {
-        await addDoc(collection(db, 'notices'), notice);
-      }
-
-      // 2. Official Events
-      const events = [
-        {
-          title: 'Student Union Election Voting Day 2026',
-          date: '2026-10-15',
-          location: 'Khaira College Campus Booths',
-          description: 'Cast your valuable vote for ABVP candidates for President and General Secretary! Every vote counts.'
-        },
-        {
-          title: 'Campus Cleanliness & Tree Plantation Drive',
-          date: '2026-10-22',
-          location: 'College Campus Garden',
-          description: 'Swachh Campus initiative and environmental awareness drive organized by ABVP karyakartas.'
-        },
-        {
-          title: 'National Youth Day & Blood Donation Camp',
-          date: '2026-11-12',
-          location: 'College Auditorium & Health Center',
-          description: 'Voluntary blood donation camp in association with District Red Cross Society.'
-        }
-      ];
-
-      for (const ev of events) {
-        await addDoc(collection(db, 'events'), ev);
-      }
-
-      // 3. Official Leaders
-      const leaders = [
-        {
-          name: 'President Candidate - ABVP Khaira',
-          fullName: 'President Candidate - ABVP Khaira',
-          class: '+3 2nd Year',
-          position: 'President',
-          phone: '9876543210',
-          email: 'president@khaira.org',
-          why: 'Dedicated to student rights, library resources, and fair examinations.',
-          status: 'approved',
-          createdAt: serverTimestamp()
-        },
-        {
-          name: 'Secretary Candidate - ABVP Khaira',
-          fullName: 'Secretary Candidate - ABVP Khaira',
-          class: '+3 1st Year',
-          position: 'Secretary',
-          phone: '9876543211',
-          email: 'secretary@khaira.org',
-          why: 'Fighting for transparent college fees, laboratory equipment, and sports facilities.',
-          status: 'approved',
-          createdAt: serverTimestamp()
-        }
-      ];
-
-      for (const ld of leaders) {
-        await addDoc(collection(db, 'leaders'), ld);
-      }
-
-      if (alertBox) {
-        alertBox.className = 'form-alert success';
-        alertBox.textContent = 'Cloud Firestore successfully seeded with official ABVP Khaira Notices, Events, and Leaders! Check your Firebase Console now.';
-        alertBox.style.display = 'block';
-      }
-      alert('Success! Official Notices, Events, and Leaders have been created in Cloud Firestore. Refresh your Firebase Console to view your live data!');
-    } catch (err) {
-      console.error('Seed data error:', err);
-      if (alertBox) {
-        alertBox.className = 'form-alert error';
-        alertBox.textContent = 'Seed error: ' + (err.message || err.code) + '. If permission denied, update Firestore Rules in Firebase Console to allow read/write.';
-        alertBox.style.display = 'block';
-      }
-    } finally {
-      seedBtn.disabled = false;
-      seedBtn.innerHTML = `
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-          <polyline points="17 8 12 3 7 8"></polyline>
-          <line x1="12" y1="3" x2="12" y2="15"></line>
-        </svg>
-        Seed Official Data
-      `;
-    }
-  });
 }

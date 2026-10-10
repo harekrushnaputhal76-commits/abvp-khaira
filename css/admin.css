@@ -646,3 +646,88 @@
 .chat-full-section {
   grid-column: 1 / -1;
 }
+
+/* Step 3: Admin Analytics & Charts Grid */
+.admin-analytics-section {
+  margin-bottom: 2.5rem;
+}
+
+.admin-section-heading {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+
+@media (min-width: 680px) {
+  .admin-charts-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.chart-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-soft);
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-card-header {
+  margin-bottom: 1rem;
+}
+
+.chart-card-title {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.chart-card-sub {
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  margin-top: 0.2rem;
+}
+
+.chart-container {
+  position: relative;
+  min-height: 220px;
+  max-height: 260px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chart-empty-notice {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  font-style: italic;
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.status-blocked {
+  background: rgba(180, 35, 24, 0.12);
+  color: var(--error);
+  border: 1px solid rgba(180, 35, 24, 0.3);
+}
+
+.status-active {
+  background: rgba(31, 122, 77, 0.12);
+  color: var(--success);
+  border: 1px solid rgba(31, 122, 77, 0.3);
+}
