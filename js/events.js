@@ -58,16 +58,50 @@ export function initEvents() {
     unsubscribeEvents = onSnapshot(eventsQuery, (snapshot) => {
       if (snapshot.empty) {
         container.innerHTML = `
-          <div class="events-empty" role="status">
-            <svg class="empty-icon" viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-              <line x1="16" y1="2" x2="16" y2="6"></line>
-              <line x1="8" y1="2" x2="8" y2="6"></line>
-              <line x1="3" y1="10" x2="21" y2="10"></line>
-            </svg>
-            <p>No events announced yet. Stay tuned.</p>
-          </div>
+          <article class="event-card tilt-card" tabindex="0">
+            <div class="event-card-top">
+              <span class="event-card-date">
+                <svg class="event-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                15 Oct 2026
+              </span>
+              <span class="event-card-location">
+                <svg class="event-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                Khaira College Campus
+              </span>
+            </div>
+            <h3 class="event-card-title">Student Union Election Voting Day 2026</h3>
+            <p class="event-card-desc">Cast your vote for ABVP candidates for President and General Secretary. Every vote counts for campus progress!</p>
+          </article>
+          <article class="event-card tilt-card" tabindex="0">
+            <div class="event-card-top">
+              <span class="event-card-date">
+                <svg class="event-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                22 Oct 2026
+              </span>
+              <span class="event-card-location">
+                <svg class="event-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                College Garden
+              </span>
+            </div>
+            <h3 class="event-card-title">Campus Cleanliness &amp; Plantation Drive</h3>
+            <p class="event-card-desc">Swachh Campus initiative and environmental awareness drive organized by ABVP karyakartas.</p>
+          </article>
+          <article class="event-card tilt-card" tabindex="0">
+            <div class="event-card-top">
+              <span class="event-card-date">
+                <svg class="event-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                12 Nov 2026
+              </span>
+              <span class="event-card-location">
+                <svg class="event-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                College Auditorium
+              </span>
+            </div>
+            <h3 class="event-card-title">National Youth Day &amp; Blood Donation Camp</h3>
+            <p class="event-card-desc">Annual youth empowerment seminar and voluntary blood donation drive for students and faculty.</p>
+          </article>
         `;
+        attachTiltToEvents(container);
         return;
       }
 

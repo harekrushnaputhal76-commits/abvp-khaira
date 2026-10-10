@@ -2730,3 +2730,213 @@ body.lightbox-locked {
     padding: 64px 1.5rem;
   }
 }
+
+/* Election Countdown Bar */
+.election-countdown-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(250, 247, 242, 0.9));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: 1.25rem 1.75rem;
+  margin-bottom: 2.25rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  backdrop-filter: blur(10px);
+}
+
+@media (min-width: 640px) {
+  .election-countdown-bar {
+    flex-direction: row;
+  }
+}
+
+.countdown-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--maroon);
+  letter-spacing: -0.01em;
+}
+
+.countdown-units {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.countdown-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #FFFFFF;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.4rem 0.75rem;
+  min-width: 54px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.unit-number {
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--saffron);
+  line-height: 1.1;
+}
+
+.unit-text {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.countdown-sep {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+  margin-top: -8px;
+}
+
+/* Candidates Character Grid */
+.candidates-character-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+@media (min-width: 768px) {
+  .candidates-character-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.candidate-character-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+@media (min-width: 500px) {
+  .candidate-character-card {
+    flex-direction: row;
+  }
+}
+
+.candidate-character-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.08);
+}
+
+.candidate-avatar-wrap {
+  position: relative;
+  width: 100%;
+  min-height: 200px;
+  max-height: 240px;
+  background: #111;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+@media (min-width: 500px) {
+  .candidate-avatar-wrap {
+    width: 180px;
+    height: auto;
+    max-height: none;
+  }
+}
+
+.candidate-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--transition-normal);
+}
+
+.candidate-character-card:hover .candidate-avatar-img {
+  transform: scale(1.05);
+}
+
+.candidate-role-badge {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: var(--saffron);
+  color: #FFFFFF;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.25rem 0.6rem;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.candidate-role-badge.secretary-badge {
+  background: var(--maroon);
+}
+
+.candidate-info {
+  padding: 1.5rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+}
+
+.candidate-name {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--maroon);
+  margin-bottom: 0.25rem;
+}
+
+.candidate-post {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--teal);
+  margin-bottom: 0.65rem;
+}
+
+.candidate-tagline {
+  font-size: 0.875rem;
+  font-style: italic;
+  color: var(--ink-soft);
+  line-height: 1.5;
+  margin-bottom: 1rem;
+}
+
+.candidate-pill-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.cand-pill {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-badge);
+  background: #F3F4F6;
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+
+.cand-pill.highlight-pill-saffron {
+  background: rgba(217, 115, 13, 0.12);
+  border-color: rgba(217, 115, 13, 0.3);
+  color: var(--saffron-dark);
+}

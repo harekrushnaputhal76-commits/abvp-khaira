@@ -13,6 +13,7 @@ function initApp() {
   initNavbar();
   initTicker();
   initTiltCards();
+  initElectionCountdown();
   initLeaderForm();
   initNotices();
   initEvents();
@@ -372,4 +373,44 @@ function initLeaderForm() {
     alertBox.style.display = 'block';
     alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
+}
+
+/**
+ * Live Countdown to Campus Election Day (15 October 2026)
+ */
+function initElectionCountdown() {
+  const cdDays = document.getElementById('cd-days');
+  const cdHours = document.getElementById('cd-hours');
+  const cdMins = document.getElementById('cd-mins');
+  const cdSecs = document.getElementById('cd-secs');
+
+  if (!cdDays || !cdHours || !cdMins || !cdSecs) return;
+
+  const targetTime = new Date('2026-10-15T08:00:00+05:30').getTime();
+
+  function updateTimer() {
+    const now = Date.now();
+    const diff = targetTime - now;
+
+    if (diff <= 0) {
+      cdDays.textContent = '00';
+      cdHours.textContent = '00';
+      cdMins.textContent = '00';
+      cdSecs.textContent = '00';
+      return;
+    }
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const secs = Math.floor((diff % (1000 * 60)) / 1000);
+
+    cdDays.textContent = String(days).padStart(2, '0');
+    cdHours.textContent = String(hours).padStart(2, '0');
+    cdMins.textContent = String(mins).padStart(2, '0');
+    cdSecs.textContent = String(secs).padStart(2, '0');
+  }
+
+  updateTimer();
+  setInterval(updateTimer, 1000);
 }

@@ -9,7 +9,17 @@ export function initQRCode() {
 
   if (!canvas) return;
 
-  const pageUrl = window.location.href;
+  let pageUrl = window.location.href;
+  // If running locally or on file, generate QR for the live public site so smartphones can scan and open it!
+  if (!pageUrl.startsWith('http') || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    pageUrl = 'https://harekrushnaputhal76-commits.github.io/abvp-khaira/';
+  }
+
+  const captionElem = document.querySelector('.qr-card-caption');
+  if (captionElem) {
+    captionElem.textContent = 'harekrushnaputhal76-commits.github.io/abvp-khaira';
+  }
+
   const isDesktop = window.innerWidth >= 768;
   const qrSize = isDesktop ? 260 : 220;
 
@@ -36,7 +46,7 @@ export function initQRCode() {
   // Copy Page URL with friendly clipboard handling
   if (copyBtn) {
     copyBtn.addEventListener('click', async () => {
-      const urlToCopy = window.location.href;
+      const urlToCopy = pageUrl;
       let copied = false;
 
       if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -76,7 +86,7 @@ export function initQRCode() {
  */
 function renderQRWithFallback(canvas, errorBox, url, size) {
   let attempts = 0;
-  const maxAttempts = 20;
+  const maxAttempts = 15;
 
   function tryGenerate() {
     if (typeof window.QRCode !== 'undefined' && typeof window.QRCode.toCanvas === 'function') {
@@ -89,8 +99,8 @@ function renderQRWithFallback(canvas, errorBox, url, size) {
         }
       }, (err) => {
         if (err) {
-          console.error('QRCode generation error:', err);
-          showQRError(canvas, errorBox);
+          console.warn('QRCode generation error, using fallback:', err);
+          renderImageQR(canvas, errorBox, url, size);
         } else {
           canvas.style.display = 'block';
           if (errorBox) errorBox.style.display = 'none';
@@ -100,11 +110,32 @@ function renderQRWithFallback(canvas, errorBox, url, size) {
       attempts++;
       setTimeout(tryGenerate, 150);
     } else {
-      showQRError(canvas, errorBox);
+      renderImageQR(canvas, errorBox, url, size);
     }
   }
 
   tryGenerate();
+}
+
+function renderImageQR(canvas, errorBox, url, size) {
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.src = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(url)}&color=0B1020&bgcolor=FFFFFF`;
+  img.onload = () => {
+    try {
+      const ctx = canvas.getContext('2d');
+      canvas.width = size;
+      canvas.height = size;
+      ctx.drawImage(img, 0, 0, size, size);
+      canvas.style.display = 'block';
+      if (errorBox) errorBox.style.display = 'none';
+    } catch (e) {
+      console.warn('Canvas fallback draw error:', e);
+    }
+  };
+  img.onerror = () => {
+    showQRError(canvas, errorBox);
+  };
 }
 
 function showQRError(canvas, errorBox) {

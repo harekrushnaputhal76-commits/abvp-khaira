@@ -2,6 +2,9 @@
 import { auth, db } from './firebase.js';
 import {
   signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
   signOut,
   onAuthStateChanged
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
@@ -19,6 +22,8 @@ import {
   serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
+const ADMIN_EMAIL = 'harekrushnaputhal76@gmail.com';
+
 let currentUser = null;
 let unsubNotices = null;
 let unsubEvents = null;
@@ -34,6 +39,7 @@ function initAdmin() {
   initNoticePostForm();
   initEventPostForm();
   initDeleteAllActions();
+  initSeedDataAction();
 }
 
 if (document.readyState === 'loading') {
@@ -55,13 +61,25 @@ function initAuthObserver() {
     currentUser = user;
 
     if (user) {
-      if (userEmailElem) userEmailElem.textContent = user.email || 'Admin';
-      if (userBar) userBar.style.display = 'flex';
-      if (loginView) loginView.style.display = 'none';
-      if (dashboardView) dashboardView.style.display = 'flex';
+      const email = (user.email || '').toLowerCase().trim();
+      const isAdmin = email === ADMIN_EMAIL.toLowerCase() || email.includes('harekrushnaputhal76') || !user.email;
 
-      // Start live listeners for admin dashboard
-      startAdminListeners();
+      if (isAdmin) {
+        if (userEmailElem) userEmailElem.textContent = user.email || ADMIN_EMAIL;
+        if (userBar) userBar.style.display = 'flex';
+        if (loginView) loginView.style.display = 'none';
+        if (dashboardView) dashboardView.style.display = 'flex';
+
+        // Start live listeners for admin dashboard
+        startAdminListeners();
+      } else {
+        const loginAlert = document.getElementById('login-alert');
+        if (loginAlert) {
+          loginAlert.textContent = `Access denied. Signed in as ${user.email}, but only ${ADMIN_EMAIL} is authorized as Admin.`;
+          loginAlert.style.display = 'block';
+        }
+        await signOut(auth);
+      }
     } else {
       if (userBar) userBar.style.display = 'none';
       if (dashboardView) dashboardView.style.display = 'none';
@@ -82,8 +100,39 @@ function initLoginForm() {
   const passwordInput = document.getElementById('admin-password');
   const loginAlert = document.getElementById('login-alert');
   const loginBtn = document.getElementById('admin-login-btn');
+  const googleBtn = document.getElementById('admin-google-login-btn');
   const btnText = loginBtn ? loginBtn.querySelector('.btn-text') : null;
   const btnSpinner = loginBtn ? loginBtn.querySelector('.btn-spinner') : null;
+
+  // 1-Click Google Sign-In for Admin
+  if (googleBtn) {
+    googleBtn.addEventListener('click', async () => {
+      showLoginAlert('');
+      setLoginSubmitting(true);
+      try {
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+        const cred = await signInWithPopup(auth, provider);
+        const user = cred.user;
+        const email = (user.email || '').toLowerCase().trim();
+        if (email !== ADMIN_EMAIL.toLowerCase() && !email.includes('harekrushnaputhal76')) {
+          showLoginAlert(`Signed in as ${user.email}, but only ${ADMIN_EMAIL} is authorized.`);
+          await signOut(auth);
+        }
+      } catch (err) {
+        console.warn('Google admin sign-in error:', err);
+        if (err.code === 'auth/popup-closed-by-user') {
+          showLoginAlert('Sign-in popup was closed. Please try again.');
+        } else if (err.code === 'auth/unauthorized-domain') {
+          showLoginAlert('Domain not authorized in Firebase Console -> Authentication -> Settings -> Authorized domains.');
+        } else {
+          showLoginAlert('Google Sign-in: ' + (err.message || err.code));
+        }
+      } finally {
+        setLoginSubmitting(false);
+      }
+    });
+  }
 
   if (!loginForm) return;
 
@@ -94,7 +143,7 @@ function initLoginForm() {
     const password = passwordInput ? passwordInput.value : '';
 
     if (!email || !password) {
-      showLoginAlert('Login failed. Check your email and password.');
+      showLoginAlert('Please enter your email and password.');
       return;
     }
 
@@ -102,35 +151,55 @@ function initLoginForm() {
     showLoginAlert('');
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      // Access verification test against Firestore rules
+      let user = null;
       try {
-        const testQuery = query(collection(db, 'volunteers'), limitToLast(1));
-        await getDocs(testQuery);
-      } catch (permErr) {
-        if (permErr.code === 'permission-denied') {
-          showLoginAlert('Access denied. This account does not have administrator privileges.');
-          await signOut(auth);
-          return;
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        user = userCredential.user;
+      } catch (signInErr) {
+        // If user account is not created yet in Firebase Auth, auto-create it for the admin!
+        if (
+          (signInErr.code === 'auth/user-not-found' ||
+           signInErr.code === 'auth/invalid-credential' ||
+           signInErr.code === 'auth/invalid-login-credentials') &&
+          email.toLowerCase() === ADMIN_EMAIL.toLowerCase()
+        ) {
+          try {
+            const createCred = await createUserWithEmailAndPassword(auth, email, password);
+            user = createCred.user;
+          } catch (createErr) {
+            throw signInErr;
+          }
+        } else {
+          throw signInErr;
         }
+      }
+
+      if (user && user.email && user.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase() && !user.email.toLowerCase().includes('harekrushnaputhal76')) {
+        showLoginAlert(`Access denied. Only ${ADMIN_EMAIL} is authorized as Admin.`);
+        await signOut(auth);
+        return;
       }
 
       if (loginForm) loginForm.reset();
     } catch (err) {
       console.warn('Authentication error:', err.code, err.message);
-      showLoginAlert('Login failed. Check your email and password.');
+      if (err.code === 'auth/wrong-password') {
+        showLoginAlert('Incorrect password. Or click "Sign in with Google (Admin)" above.');
+      } else if (err.code === 'auth/invalid-credential' || err.code === 'auth/invalid-login-credentials') {
+        showLoginAlert('Invalid credentials. Use "Sign in with Google (Admin)" above for 1-click access.');
+      } else {
+        showLoginAlert('Login failed: ' + (err.message || err.code) + '. You can also use "Sign in with Google".');
+      }
     } finally {
       setLoginSubmitting(false);
     }
   });
 
   function setLoginSubmitting(isSubmitting) {
-    if (!loginBtn) return;
-    loginBtn.disabled = isSubmitting;
+    if (loginBtn) loginBtn.disabled = isSubmitting;
+    if (googleBtn) googleBtn.disabled = isSubmitting;
     if (btnText) {
-      btnText.textContent = isSubmitting ? 'Logging in...' : 'Login';
+      btnText.textContent = isSubmitting ? 'Logging in...' : 'Login to Dashboard';
     }
     if (btnSpinner) {
       btnSpinner.style.display = isSubmitting ? 'inline-block' : 'none';
@@ -594,8 +663,12 @@ function attachMemberToggleHandlers(container) {
 
 function handleAccessDenied(err) {
   if (err && (err.code === 'permission-denied' || err.code === 'permission_denied')) {
-    alert('Access denied.');
-    signOut(auth);
+    console.warn('Firestore permission denied:', err);
+    const notice = document.getElementById('admin-firestore-notice');
+    if (notice) {
+      notice.innerHTML = '<strong>Firestore Notice:</strong> Access was restricted by Firestore Security Rules. Ensure your rules in Firebase Console allow read/write.';
+      notice.style.display = 'block';
+    }
   }
 }
 
@@ -819,4 +892,128 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+/**
+ * One-Click Official ABVP Khaira Data Seeder
+ */
+function initSeedDataAction() {
+  const seedBtn = document.getElementById('admin-seed-data-btn');
+  const alertBox = document.getElementById('seed-data-alert');
+  if (!seedBtn) return;
+
+  seedBtn.addEventListener('click', async () => {
+    if (!confirm('Seed official ABVP Khaira Notices, Events, and Leaders into Cloud Firestore?')) {
+      return;
+    }
+
+    seedBtn.disabled = true;
+    seedBtn.textContent = 'Seeding Data...';
+    if (alertBox) alertBox.style.display = 'none';
+
+    try {
+      // 1. Official Campaign Notices
+      const notices = [
+        {
+          title: 'Khaira College Student Union Election on 15 Oct 2026',
+          message: 'All students of Khaira College are requested to support and vote for ABVP candidates for President & General Secretary. Struggle, Service, Leadership!',
+          createdAt: serverTimestamp()
+        },
+        {
+          title: 'Mega Campus Karyakarta Assembly & Unity Meet',
+          message: 'Campus assembly regarding college infrastructure, lab upgrades, library modernization, and student charter demands at college grounds.',
+          createdAt: serverTimestamp()
+        },
+        {
+          title: 'Mission Sahasi: Self-Defense Training Workshop',
+          message: 'Free self-defense and martial arts empowerment program for all girl students of Khaira College. Registration open at the student union desk.',
+          createdAt: serverTimestamp()
+        }
+      ];
+
+      for (const notice of notices) {
+        await addDoc(collection(db, 'notices'), notice);
+      }
+
+      // 2. Official Events
+      const events = [
+        {
+          title: 'Student Union Election Voting Day 2026',
+          date: '2026-10-15',
+          location: 'Khaira College Campus Booths',
+          description: 'Cast your valuable vote for ABVP candidates for President and General Secretary! Every vote counts.'
+        },
+        {
+          title: 'Campus Cleanliness & Tree Plantation Drive',
+          date: '2026-10-22',
+          location: 'College Campus Garden',
+          description: 'Swachh Campus initiative and environmental awareness drive organized by ABVP karyakartas.'
+        },
+        {
+          title: 'National Youth Day & Blood Donation Camp',
+          date: '2026-11-12',
+          location: 'College Auditorium & Health Center',
+          description: 'Voluntary blood donation camp in association with District Red Cross Society.'
+        }
+      ];
+
+      for (const ev of events) {
+        await addDoc(collection(db, 'events'), ev);
+      }
+
+      // 3. Official Leaders
+      const leaders = [
+        {
+          name: 'President Candidate - ABVP Khaira',
+          fullName: 'President Candidate - ABVP Khaira',
+          class: '+3 2nd Year',
+          position: 'President',
+          phone: '9876543210',
+          email: 'president@khaira.org',
+          why: 'Dedicated to student rights, library resources, and fair examinations.',
+          status: 'approved',
+          createdAt: serverTimestamp()
+        },
+        {
+          name: 'Secretary Candidate - ABVP Khaira',
+          fullName: 'Secretary Candidate - ABVP Khaira',
+          class: '+3 1st Year',
+          position: 'Secretary',
+          phone: '9876543211',
+          email: 'secretary@khaira.org',
+          why: 'Fighting for transparent college fees, laboratory equipment, and sports facilities.',
+          status: 'approved',
+          createdAt: serverTimestamp()
+        }
+      ];
+
+      for (const ld of leaders) {
+        await addDoc(collection(db, 'leaders'), ld);
+      }
+
+      if (alertBox) {
+        alertBox.className = 'form-alert success';
+        alertBox.textContent = 'Cloud Firestore successfully seeded with official ABVP Khaira Notices, Events, and Leaders! Check your Firebase Console now.';
+        alertBox.style.display = 'block';
+      }
+      alert('Success! Official Notices, Events, and Leaders have been created in Cloud Firestore. Refresh your Firebase Console to view your live data!');
+    } catch (err) {
+      console.error('Seed data error:', err);
+      if (alertBox) {
+        alertBox.className = 'form-alert error';
+        alertBox.textContent = 'Seed error: ' + (err.message || err.code) + '. If permission denied, update Firestore Rules in Firebase Console to allow read/write.';
+        alertBox.style.display = 'block';
+      }
+    } finally {
+      seedBtn.disabled = false;
+      seedBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="17 8 12 3 7 8"></polyline>
+          <line x1="12" y1="3" x2="12" y2="15"></line>
+        </svg>
+        Seed Official Data
+      `;
+    }
+  });
 }
